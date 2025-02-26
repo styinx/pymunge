@@ -1,6 +1,7 @@
 [build-system]
 requires        = [
-    "setuptools>=61.0"
+    "setuptools>=61.0",
+    "parxel~=0.0.5"
 ]
 build-backend   = "setuptools.build_meta"
 
@@ -11,7 +12,7 @@ packages = ["pymunge"]
 "" = "source"
 
 [project]
-name            = "pymunge"
+name            = "swbf-pymunge"
 version         = "0.0.1"
 requires-python = ">=3.11"
 description     = "SWBF Python munger"
