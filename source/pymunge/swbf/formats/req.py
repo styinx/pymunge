@@ -1,8 +1,6 @@
 import re
 import sys
 from pathlib import Path
-from io import FileIO, StringIO
-from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
@@ -37,7 +35,7 @@ class Block(LexicalNode):
         self.header: str = self.raw().strip()
         self.type: str = ''
 
-        if self.header not in REQ.Header:
+        if self.header not in Req.Header:
             logger.warning(f'Block header "{self.header}" is not known.')
 
 
@@ -48,7 +46,7 @@ class Type(LexicalNode):
 
         self.type: str = self.raw().strip()
 
-        if self.type not in REQ.Type:
+        if self.type not in Req.Type:
             logger.warning(f'Block type "{self.type}" is not known.')
 
 
@@ -63,7 +61,7 @@ class Property(LexicalNode):
         self.key: str = match.group(1)
         self.value: str = match.group(2)
 
-        if self.key not in REQ.Property:
+        if self.key not in Req.Property:
             logger.warning(f'Block property "{self.key}" is not known.')
 
 
@@ -74,7 +72,7 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
 
-class REQ(Document, Parser):
+class Req(Document, Parser):
     class Header(Enum):
         Reqn = 'REQN'
         Ucft = 'ucft'
@@ -188,7 +186,7 @@ class REQ(Document, Parser):
                     condition = Condition(self.collect_tokens())
                     self.enter_scope(condition)
 
-            # Either skip or thow error
+            # Either skip or throw error
             else:
                 logger.warning(f'Unrecognized token "{self.get()} ({req.tokens()})".')
                 self.discard()
@@ -201,14 +199,14 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         path = Path(sys.argv[1])
         if path.is_file():
-            req = REQ.read(filepath=path)
+            req = Req.read(filepath=path)
             req.print()
         else:
             for file in path.rglob('*.req'):
-                req = REQ.read(filepath=file)
+                req = Req.read(filepath=file)
 
     elif len(sys.argv) > 2:
-        req = REQ.read(stream=sys.stdin)
+        req = Req.read(stream=sys.stdin)
     else:
         sys.exit(1)
 

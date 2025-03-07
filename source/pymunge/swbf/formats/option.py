@@ -1,8 +1,6 @@
 import re
 import sys
 from pathlib import Path
-from io import FileIO, StringIO
-from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
@@ -146,7 +144,7 @@ class Option(Document, Parser):
 
                 self.exit_scope()
 
-            # Either skip or thow error
+            # Either skip or throw error
             else:
                 logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()

@@ -1,8 +1,5 @@
-import re
 import sys
 from pathlib import Path
-from io import FileIO, StringIO
-from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
@@ -26,7 +23,7 @@ class Block(LexicalNode):
 
         self.header: str = self.raw().replace('(', '').replace(')', '').strip()
 
-        if self.header not in SKY.Header:
+        if self.header not in Sky.Header:
             logger.warning(f'Block header "{self.header}" is not known.')
 
 
@@ -39,11 +36,11 @@ class Function(LexicalNode):
         self.name: str = function[0]
         self.arguments: list[str] = function[1:]
 
-        if self.name not in SKY.Function:
+        if self.name not in Sky.Function:
             logger.warning(f'Function name "{self.name}" is not known.')
 
 
-class SKY(Document, Parser):
+class Sky(Document, Parser):
     class Header(Enum):
         FlatInfo = 'FlatInfo'
         DomeInfo = 'DomeInfo'
@@ -141,7 +138,7 @@ class SKY(Document, Parser):
 
                 # We assume that the self format can't have nested blocks.
 
-                if isinstance(self.scope, SKY):
+                if isinstance(self.scope, Sky):
                     self.consume_until(TK.ParanthesisClose)
                     self.next()
 
@@ -155,7 +152,7 @@ class SKY(Document, Parser):
                     function = Function(self.collect_tokens())
                     self.add_to_scope(function)
 
-            # Either skip or thow error
+            # Either skip or throw error
             else:
                 logger.warning(f'Unrecognized token "{self.get()} ({sky.tokens()})".')
                 self.discard()
@@ -168,14 +165,14 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         path = Path(sys.argv[1])
         if path.is_file():
-            sky = SKY.read(filepath=path)
+            sky = Sky.read(filepath=path)
             sky.print()
         else:
             for file in path.rglob('*.sky'):
-                sky = SKY.read(filepath=file)
+                sky = Sky.read(filepath=file)
 
     elif len(sys.argv) > 2:
-        sky = SKY.read(stream=sys.stdin)
+        sky = Sky.read(stream=sys.stdin)
     else:
         sys.exit(1)
 

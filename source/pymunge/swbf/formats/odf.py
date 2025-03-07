@@ -1,10 +1,8 @@
 import sys
 from pathlib import Path
-from io import FileIO, StringIO
-from util.lexer import Lexer
-from util.parser import Parser
-from util.nodes import Node, Document, LexicalNode
-from util.token import TK, Token
+from parxel.parser import Parser
+from parxel.nodes import Node, Document, LexicalNode
+from parxel.token import TK, Token
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -25,7 +23,7 @@ class Key(LexicalNode):
 
         self.name: str = self.raw().strip()
 
-        if self.name not in ODF.Key:
+        if self.name not in Odf.Key:
             logger.warning(f'Key name "{self.name}" is not known.')
 
 
@@ -42,11 +40,11 @@ class Section(LexicalNode):
 
         self.name: str = self.raw().strip()
 
-        if self.name not in ODF.Section:
+        if self.name not in Odf.Section:
             logger.warning(f'Section name "{self.name}" is not known.')
 
 
-class ODF(Document, Parser):
+class Odf(Document, Parser):
     class Section(Enum):
        ExplosionClass = 'ExplosionClass'
        GameObjectClass = 'GameObjectClass'
@@ -1143,7 +1141,7 @@ class ODF(Document, Parser):
 
                 self.discard()  # \n
 
-            # Either skip or thow error
+            # Either skip or throw error
             else:
                 logger.warning(f'Unrecognized token "{self.get()} ({odf.tokens()})".')
                 self.discard()
@@ -1156,14 +1154,14 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         path = Path(sys.argv[1])
         if path.is_file():
-            odf = ODF.read(filepath=path)
+            odf = Odf.read(filepath=path)
             odf.print()
         else:
             for file in path.rglob('*.odf'):
-                odf = ODF.read(filepath=file)
+                odf = Odf.read(filepath=file)
 
     elif len(sys.argv) > 2:
-        odf = ODF.read(stream=sys.stdin)
+        odf = Odf.read(stream=sys.stdin)
     else:
         sys.exit(1)
 
