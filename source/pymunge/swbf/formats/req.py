@@ -171,7 +171,7 @@ class Req(Document, Parser):
                 self.discard()  # #
 
                 # Condition name
-                self.consume(TK.Word)
+                self.consume_strict(TK.Word)
                 self.consume_while_any(TK.Whitespaces)
 
                 # Condition parameters
