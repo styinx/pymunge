@@ -1,11 +1,9 @@
 import re
 import sys
 from pathlib import Path
-from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from munger import Munger, MungerStub
-from registry import Dependency
+from registry import FileRegistry, Dependency
 from swbf.formats.format import Format
 from util.logging import get_logger
 from util.enum import Enum
@@ -88,7 +86,7 @@ class Value(LexicalNode, Dependency):
             self.filepath = (Path(root(self).filepath.parent) / f'{self.name}.{ending}').resolve()
 
 
-class Req(Format, Document, Parser):
+class Req(Format):
     class Header(Enum):
         Reqn = 'REQN'
         Ucft = 'ucft'
@@ -119,7 +117,7 @@ class Req(Format, Document, Parser):
         Zafbin = 'zafbin'
     
     TypeFileMapping = {
-        Type.Bnk: 'asfx', # sfx
+        Type.Bnk: 'asfx', # TODO sfx
         Type.Class: 'odf',
         Type.Config: 'snd',
         Type.Lvl: 'req',
@@ -127,13 +125,8 @@ class Req(Format, Document, Parser):
         Type.World: 'wld'
     }
 
-    def __init__(self, filepath: Path, munger: Munger = None):
-        if not munger:
-            munger = MungerStub(filepath.parent)
-
-        Format.__init__(self, munger=munger)
-        Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath)
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
     def parse_format(self):
         while self:
@@ -218,7 +211,7 @@ class Req(Format, Document, Parser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({req.tokens()})".')
+                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
@@ -226,19 +219,4 @@ class Req(Format, Document, Parser):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            req = Req.read(filepath=path)
-            req.print()
-        else:
-            for file in path.rglob('*.req'):
-                req = Req.read(filepath=file)
-
-    elif len(sys.argv) > 2:
-        req = Req.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    Req.cmd_helper()

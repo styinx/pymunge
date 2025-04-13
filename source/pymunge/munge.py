@@ -2,6 +2,7 @@ from os import getcwd
 from pathlib import Path
 from argparse import ArgumentParser
 from munger import Munger
+from registry import FileRegistry
 from swbf.formats.req import Req
 
 
@@ -14,10 +15,7 @@ def main():
     args = parser.parse_args()
 
     munger = Munger(args)
-
-    for entry in munger.source.rglob('*.req'):
-        req = Req(filepath=entry, munger=munger)
-        req.parse()
+    munger.munge()
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 from argparse import Namespace
 from pathlib import Path
 from registry import FileRegistry
+from swbf.formats.req import Req
 from util.enum import Enum
-
 
 
 class Munger:
@@ -19,10 +19,9 @@ class Munger:
 
     def __init__(self, args: Namespace):
         self.source : Path = args.folder
-        self.registry = FileRegistry()
-
-
-class MungerStub(Munger):
-    def __init__(self, folder: Path):
-        args = Namespace({'folder': folder})
-        Munger.__init__(args)
+        self.registry: FileRegistry = FileRegistry()
+    
+    def munge(self):
+        for entry in self.source.rglob('*.req'):
+            req = Req(registry=self.registry, filepath=entry)
+            req.parse()

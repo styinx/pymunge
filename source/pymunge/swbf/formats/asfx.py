@@ -4,9 +4,8 @@ from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from munger import Munger, MungerStub
 from swbf.formats.format import Format
-from registry import Dependency
+from registry import FileRegistry, Dependency
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -80,7 +79,7 @@ class Value(LexicalNode):
         #    logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
-class Asfx(Format, Document, Parser):
+class Asfx(Format):
     class Switch(Enum):
         Resample = 'resample'
 
@@ -103,13 +102,8 @@ class Asfx(Format, Document, Parser):
         }
     }
 
-    def __init__(self, filepath: Path, tokens: list[Token], munger : Munger = None):
-        if not munger:
-            munger = MungerStub(filepath.parent)
-
-        Format.__init__(self, munger)
-        Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+    def __init__(self, registry : FileRegistry, filepath: Path, tokens: list[Token] = None):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
     def parse_format(self):
         while self:
