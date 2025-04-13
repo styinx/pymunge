@@ -4,6 +4,9 @@ from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
+from munger import Munger, MungerStub
+from swbf.formats.format import Format
+from registry import Dependency
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -28,7 +31,7 @@ class Condition(LexicalNode):
         self.arguments: list[str] = condition[1:]
 
 
-class SoundEffect(LexicalNode):
+class SoundEffect(LexicalNode, Dependency):
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -36,6 +39,9 @@ class SoundEffect(LexicalNode):
 
         self.path: str = values[0]
         self.name: str = '' if len(values) == 1 else values[1]
+
+        filepath = Path(self.path)
+        Dependency.__init__(self, filepath.resolve())
 
 
 class Switch(LexicalNode):
@@ -74,7 +80,7 @@ class Value(LexicalNode):
         #    logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
-class Asfx(Document, Parser):
+class Asfx(Format, Document, Parser):
     class Switch(Enum):
         Resample = 'resample'
 
@@ -97,7 +103,11 @@ class Asfx(Document, Parser):
         }
     }
 
-    def __init__(self, filepath: Path, tokens: list[Token]):
+    def __init__(self, filepath: Path, tokens: list[Token], munger : Munger = None):
+        if not munger:
+            munger = MungerStub(filepath.parent)
+
+        Format.__init__(self, munger)
         Document.__init__(self, filepath=filepath)
         Parser.__init__(self, filepath=filepath, tokens=tokens)
 
@@ -128,6 +138,7 @@ class Asfx(Document, Parser):
 
                 sfx = SoundEffect(self.collect_tokens())
                 self.enter_scope(sfx)
+                self.register_dependency(value)
 
                 while self.get().type == TK.Minus:
                     self.discard() # -

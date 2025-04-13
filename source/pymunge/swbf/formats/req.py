@@ -4,6 +4,9 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
+from munger import Munger, MungerStub
+from registry import Dependency
+from swbf.formats.format import Format
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -40,7 +43,6 @@ class Block(LexicalNode):
 
 
 class Type(LexicalNode):
-
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -65,14 +67,28 @@ class Property(LexicalNode):
             logger.warning(f'Block property "{self.key}" is not known.')
 
 
-class Value(LexicalNode):
+class Value(LexicalNode, Dependency):
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
+        Dependency.__init__(self, filepath=None)
 
-        self.value: str = self.raw().strip()
+        self.name: str = self.raw().strip()
+
+        if self.parent.type in Req.TypeFileMapping:
+            # TODO: Make document the root
+            # filepath = self.root
+            def root(node) -> Document:
+                if isinstance(node, Document):
+                    return node
+                elif node.parent:
+                    return root(node.parent)
+                return None
+            
+            ending = Req.TypeFileMapping[self.parent.type]
+            self.filepath = (Path(root(self).filepath.parent) / f'{self.name}.{ending}').resolve()
 
 
-class Req(Document, Parser):
+class Req(Format, Document, Parser):
     class Header(Enum):
         Reqn = 'REQN'
         Ucft = 'ucft'
@@ -101,10 +117,23 @@ class Req(Document, Parser):
         World = 'world'
         Zaabin = 'zaabin'
         Zafbin = 'zafbin'
+    
+    TypeFileMapping = {
+        Type.Bnk: 'asfx', # sfx
+        Type.Class: 'odf',
+        Type.Config: 'snd',
+        Type.Lvl: 'req',
+        Type.Model: 'msh',
+        Type.World: 'wld'
+    }
 
-    def __init__(self, filepath: Path, tokens: list[Token]):
+    def __init__(self, filepath: Path, munger: Munger = None):
+        if not munger:
+            munger = MungerStub(filepath.parent)
+
+        Format.__init__(self, munger=munger)
         Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+        Parser.__init__(self, filepath=filepath)
 
     def parse_format(self):
         while self:
@@ -145,8 +174,9 @@ class Req(Document, Parser):
                         self.add_to_scope(type)
 
                     else:
-                        value = Value(self.collect_tokens())
+                        value = Value(self.collect_tokens(), type)
                         self.add_to_scope(value)
+                        self.register_dependency(value)
 
                 elif self.get().type == TK.EqualSign:
                     self.consume_until(TK.QuotationMark)
