@@ -3,6 +3,8 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
+from swbf.formats.format import Format
+from registry import FileRegistry
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -40,7 +42,7 @@ class Function(LexicalNode):
             logger.warning(f'Function name "{self.name}" is not known.')
 
 
-class Sky(Document, Parser):
+class Sky(Format):
     class Header(Enum):
         FlatInfo = 'FlatInfo'
         DomeInfo = 'DomeInfo'
@@ -92,9 +94,8 @@ class Sky(Document, Parser):
         TopDirectionalAmbientColor = 'TopDirectionalAmbientColor'
         VehicleAmbientColor = 'VehicleAmbientColor'
 
-    def __init__(self, filepath: Path, tokens: list[Token]):
-        Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token]):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
     def parse_format(self):
         while self:
@@ -154,7 +155,7 @@ class Sky(Document, Parser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({sky.tokens()})".')
+                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
@@ -162,19 +163,4 @@ class Sky(Document, Parser):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            sky = Sky.read(filepath=path)
-            sky.print()
-        else:
-            for file in path.rglob('*.sky'):
-                sky = Sky.read(filepath=file)
-
-    elif len(sys.argv) > 2:
-        sky = Sky.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    Sky.cmd_helper()

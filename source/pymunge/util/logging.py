@@ -1,4 +1,13 @@
 import logging
+from util.enum import Enum
+
+
+class LogLevel(Enum):
+    Debug = 'debug'
+    Info = 'info'
+    Warning = 'warning'
+    Error = 'error'
+    Critical = 'critical'
 
 
 def get_logger(name: str):

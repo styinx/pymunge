@@ -3,6 +3,8 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
+from swbf.formats.format import Format
+from registry import FileRegistry
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -44,7 +46,7 @@ class Section(LexicalNode):
             logger.warning(f'Section name "{self.name}" is not known.')
 
 
-class Odf(Document, Parser):
+class Odf(Format):
     class Section(Enum):
        ExplosionClass = 'ExplosionClass'
        GameObjectClass = 'GameObjectClass'
@@ -1086,9 +1088,8 @@ class Odf(Document, Parser):
        ZoomMin = 'ZoomMin'
        ZoomRate = 'ZoomRate'
 
-    def __init__(self, filepath: Path, tokens: list[Token]):
-        Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token]):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
         self.curr = self
     
@@ -1112,8 +1113,8 @@ class Odf(Document, Parser):
 
                 self.consume_until(TK.SquareBracketClose)
 
-                if self.curr != odf:
-                    self.curr = odf.curr.parent
+                if self.curr != self:
+                    self.curr = self.curr.parent
 
                 section = Section(self.collect_tokens())
                 self.curr = section
@@ -1143,7 +1144,7 @@ class Odf(Document, Parser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({odf.tokens()})".')
+                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
@@ -1151,19 +1152,4 @@ class Odf(Document, Parser):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            odf = Odf.read(filepath=path)
-            odf.print()
-        else:
-            for file in path.rglob('*.odf'):
-                odf = Odf.read(filepath=file)
-
-    elif len(sys.argv) > 2:
-        odf = Odf.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    Odf.cmd_helper()

@@ -4,6 +4,8 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
+from swbf.formats.format import Format
+from registry import FileRegistry
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -42,7 +44,7 @@ class Value(LexicalNode):
                     logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
 
 
-class Option(Document, Parser):
+class Option(Format):
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
         Bump = 'bump'
@@ -112,9 +114,8 @@ class Option(Document, Parser):
         Switch._32Bit : [],
     }
 
-    def __init__(self, filepath: Path, tokens: list[Token]):
-        Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token]):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
     def parse_format(self):
         while self:
