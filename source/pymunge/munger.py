@@ -24,10 +24,10 @@ class Munger:
         self.registry: FileRegistry = FileRegistry()
         self.processes : list[Process] = []
         self.ui: Process = Process(target=gui)
-    
+
     def setup(self):
-        self.processes = [Process(target=self.worker)] * (CPUS - 1)
-    
+        self.processes = [Process(target=self.worker)] * (CPUS() - 1)
+
     def worker(self):
         pass
 
@@ -41,7 +41,7 @@ class Munger:
             process.join()
 
         self.ui.join()
-    
+
     def munge(self):
         for entry in self.source.rglob('*.req'):
             req = Req(registry=self.registry, filepath=entry)

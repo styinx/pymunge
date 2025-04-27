@@ -4,7 +4,7 @@ from pathlib import Path
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
 from registry import FileRegistry, Dependency
-from swbf.formats.format import Format
+from swbf.parsers.format import Format
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -81,7 +81,7 @@ class Value(LexicalNode, Dependency):
                 elif node.parent:
                     return root(node.parent)
                 return None
-            
+
             ending = Req.TypeFileMapping[self.parent.type]
             self.filepath = (Path(root(self).filepath.parent) / f'{self.name}.{ending}').resolve()
 
@@ -115,7 +115,7 @@ class Req(Format):
         World = 'world'
         Zaabin = 'zaabin'
         Zafbin = 'zafbin'
-    
+
     TypeFileMapping = {
         Type.Bnk: 'asfx', # TODO sfx
         Type.Class: 'odf',
@@ -201,7 +201,7 @@ class Req(Format):
                 while self.get().type == TK.Word:
                     self.consume(TK.Word)
                     self.consume_while_any(TK.Whitespaces)
-                
+
                 if isinstance(self.scope, Condition):
                     self.collect_tokens() # Discard end of condition
                     self.exit_scope()

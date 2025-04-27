@@ -3,7 +3,7 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from swbf.formats.format import Format
+from swbf.parsers.format import Format
 from registry import FileRegistry
 from util.enum import Enum
 from util.logging import get_logger

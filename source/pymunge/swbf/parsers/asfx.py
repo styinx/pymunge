@@ -4,7 +4,7 @@ from parxel.lexer import Lexer
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from swbf.formats.format import Format
+from swbf.parsers.format import Format
 from registry import FileRegistry, Dependency
 from util.logging import get_logger
 from util.enum import Enum
@@ -61,7 +61,7 @@ class Config(LexicalNode):
 
         if self.value not in Asfx.Config:
             logger.warning(f'Config "{self.value}" is not known.')
-        
+
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.value]:
         #    logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
 
@@ -94,7 +94,7 @@ class Asfx(Format):
         _20000 = '20000'
         _22050 = '22050'
         _44100 = '44100'
-    
+
     SwitchConfigValue = {
         Switch.Resample : {
             Config.Pc : [Value._22050, Value._44100],
@@ -177,7 +177,7 @@ class Asfx(Format):
                 while self.get().type == TK.Word:
                     self.consume_strict(TK.Word)
                     self.consume_while_any(TK.Space)
-                
+
                 if isinstance(self.scope, Condition):
                     self.collect_tokens() # Discard end of condition
                     self.exit_scope()

@@ -3,7 +3,7 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from swbf.formats.format import Format
+from swbf.parsers.format import Format
 from registry import FileRegistry
 from util.logging import get_logger
 from util.enum import Enum
@@ -1092,7 +1092,7 @@ class Odf(Format):
         Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
 
         self.curr = self
-    
+
     def parse_format(self):
         while self:
             if self.get().type in TK.Whitespaces:

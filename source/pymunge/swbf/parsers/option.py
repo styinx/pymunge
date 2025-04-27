@@ -4,7 +4,7 @@ from pathlib import Path
 from parxel.parser import Parser
 from parxel.nodes import Node, Document, LexicalNode
 from parxel.token import TK, Token
-from swbf.formats.format import Format
+from swbf.parsers.format import Format
 from registry import FileRegistry
 from util.logging import get_logger
 from util.enum import Enum
@@ -32,7 +32,7 @@ class Value(LexicalNode):
 
         if self.value not in Option.Value and not re.match(Value.RE_NUMBER, self.value):
             logger.warning(f'Value "{self.value}" is not known.')
-        
+
         if isinstance(self.parent, Switch):
             valid_values = Option.SwitchValue[self.parent.value]
 
@@ -82,7 +82,7 @@ class Option(Format):
         R5G6B5 = 'r5g6b5'
         V8U8 = 'v8u8'
         _0x80808080 = '0x80808080'
-    
+
     SwitchValue = {
         Switch.AdditiveEmissive : [],
         Switch.Bump : [],
