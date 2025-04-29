@@ -6,23 +6,27 @@ from parxel.token import Token
 from parxel.nodes import Document
 from parxel.parser import Parser
 from registry import FileRegistry, Dependency
+from util.logging import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class Format(Document, Parser):
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token]):
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
         self.registry: FileRegistry = registry
 
         Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens)
+        Parser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         raise NotImplementedError('This is an abstract base class!')
-    
+
     def register_dependency(self, dependency: Dependency):
         if dependency.filepath:
             self.registry.lookup['premunge'][dependency.filepath.name] = dependency
             print(dependency.filepath)
-    
+
     @classmethod
     def cmd_helper(cls: type):
         if len(sys.argv) == 2:

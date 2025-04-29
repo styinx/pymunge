@@ -1088,8 +1088,8 @@ class Odf(Format):
        ZoomMin = 'ZoomMin'
        ZoomRate = 'ZoomRate'
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token]):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
         self.curr = self
 
@@ -1138,7 +1138,7 @@ class Odf(Format):
                 self.consume_until(TK.LineFeed)
 
                 value = Value(self.collect_tokens())
-                self.curr.add(value)
+                key.add(value)
 
                 self.discard()  # \n
 

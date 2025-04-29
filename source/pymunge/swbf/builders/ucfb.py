@@ -1,5 +1,6 @@
+from swbf.parsers.odf import Odf
+from swbf.builders.hash import fnv1a_32
 from util.enum import Enum
-from swbf.writers.hash import fnv1a_32
 
 
 class Magic(Enum):
@@ -17,14 +18,16 @@ class Magic(Enum):
     Format = 'FMT_'
     Gmod = 'gmod'
     Ibuf = 'IBUF'
+    Info = 'INFO'
     Leaf = 'LEAF'
     Level = 'lvl_'
     Localization = 'Locl'
     Lod0 = 'LOD0'
     Name = 'NAME'
     Node = 'NODE'
-    Mina = 'MINA'
     Material = 'MTRL'
+    Mina = 'MINA'
+    Model = 'modl'
     Plan = 'plan'
     Property = 'PROP'
     Prnt = 'PRNT'
@@ -32,7 +35,7 @@ class Magic(Enum):
     Rtyp = 'RTYP'
     Script = 'scr_'
     Scop = 'SCOP'
-    Seqm = 'seqm'
+    Segm = 'segm'
     Size = 'SIZE'
     Sky = 'sky_'
     Skeleton = 'skel'
@@ -40,7 +43,7 @@ class Magic(Enum):
     Sphr = 'SPHR'
     Texture = 'tex_'
     Tada = 'TADA'
-    Tnam = 'TNAM'
+    TextureName = 'TNAM'
     Tnja = 'TNJA'
     Tree = 'TREE'
     Type = 'TYPE'
@@ -57,7 +60,7 @@ def int32_data(number: int) -> bytes:
     return number.to_bytes(length=4, byteorder='little')
 
 
-class UcbfNode:
+class UcfbNode:
     def __init__(self):
         self.parent = None
         self.children: list = []
@@ -67,9 +70,9 @@ class UcbfNode:
         self.children.append(node)
 
 
-class StringProperty(UcbfNode):
+class StringProperty(UcfbNode):
     def __init__(self, magic: str, string: str, pad: bool = True):
-        UcbfNode.__init__(self)
+        UcfbNode.__init__(self)
 
         self.magic: str = magic
         self.string: str = string
@@ -89,9 +92,9 @@ class StringProperty(UcbfNode):
         return string_data(self.magic) + int32_data(len(self.string)) + string_data(self.string)
 
 
-class NumberProperty(UcbfNode):
+class NumberProperty(UcfbNode):
     def __init__(self, magic: str, number: int):
-        UcbfNode.__init__(self)
+        UcfbNode.__init__(self)
 
         self.magic: str = magic
         self.number: int = number
@@ -104,9 +107,9 @@ class NumberProperty(UcbfNode):
         return string_data(self.magic) + int32_data(self.number)
 
 
-class BinaryProperty(UcbfNode):
+class BinaryProperty(UcfbNode):
     def __init__(self, magic: str, buffer: bytearray):
-        UcbfNode.__init__(self)
+        UcfbNode.__init__(self)
 
         self.magic: str = magic
         self.buffer: bytearray = buffer
@@ -119,9 +122,9 @@ class BinaryProperty(UcbfNode):
         return string_data(self.magic) + int32_data(len(self.buffer)) + self.buffer
 
 
-class Chunk(UcbfNode):
+class Chunk(UcfbNode):
     def __init__(self, magic: str):
-        UcbfNode.__init__(self)
+        UcfbNode.__init__(self)
 
         self.magic: str = magic
         self.buffer: bytearray = bytearray()
@@ -184,6 +187,7 @@ class Chunk(UcbfNode):
 
 
 class Ucfb(Chunk):
+    "Universal Chunk Format Block (UCFB)"
     def __init__(self):
         Chunk.__init__(self, Magic.Ucfb)
 
@@ -201,29 +205,40 @@ class Script(Chunk):
         self.add(body_property)
 
 
-class Class(Chunk):
-    def __init__(self, base: str, name: str, properties: dict):
-        Chunk.__init__(self, Magic.Entc)
+class Skeleton(Chunk):
+    def __init__(self, name: str, root: str, properties: dict):
+        Chunk.__init__(self, Magic.Skeleton)
 
-        base_property = StringProperty('BASE', base) # class label
-        name_property = StringProperty('TYPE', name) # odf name
+        info_property = StringProperty('INFO', name) # msh name
+        name_property = StringProperty('NAME', root) # root name
 
-        self.add(base_property)
+        self.add(info_property)
         self.add(name_property)
 
-        for key, value in properties.items():
-            prop = BinaryProperty('PROP', int32_data(fnv1a_32(key)) + value.encode('utf-8'))
 
-            self.add(prop)
+class Model(Chunk):
+    def __init__(self, name: str, root: str, properties: dict):
+        Chunk.__init__(self, Magic.Model)
+
+        name_property = StringProperty('NAME', name) # msh name
+        node_property = StringProperty('NODE', root) # root name
+        info_property = StringProperty('INFO', '?')
+
+        self.add(name_property)
+        self.add(node_property)
+        self.add(info_property)
 
 
-ucfb = Ucfb()
-script = Script('bes2a', 'yummy', bytearray([1, 2, 3]))
-odf = Class('Light', 'rhnlightn', {'Color': '0 0 0 255', 'Size': '25'})
+if __name__ == '__main__':
+    ucfb = Ucfb()
+    script = Script('bes2a', 'yummy', bytearray([1, 2, 3]))
+    odf = Class('Light', 'rhnlightn', {'Color': '0 0 0 255', 'Size': '25'})
+    msh = Model('platform', 'platform_root', {'Color': '0 0 0 255', 'Size': '25'})
 
-ucfb.add(script)
-ucfb.add(odf)
+    ucfb.add(script)
+    ucfb.add(odf)
+    ucfb.add(msh)
 
-ucfb.data()
-print(ucfb.dump())
+    ucfb.data()
+    print(ucfb.dump())
 

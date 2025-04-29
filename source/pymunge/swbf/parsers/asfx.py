@@ -102,8 +102,8 @@ class Asfx(Format):
         }
     }
 
-    def __init__(self, registry : FileRegistry, filepath: Path, tokens: list[Token] = None):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens)
+    def __init__(self, registry : FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
+        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
