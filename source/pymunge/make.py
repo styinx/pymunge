@@ -58,13 +58,11 @@ class Git:
     def hash(self, short: bool = True) -> str:
         return self._run('rev-parse', '--short' if short else '', 'HEAD')
 
-    def push(self) -> str:
-        return self._run('push')
+    def push(self, remote: str) -> str:
+        return self._run('push', remote)
 
-    def tag(self, tag: str, push: bool = True) -> tuple[str, str]:
-        tag_msg = self._run('tag', tag)
-        push_msg = self._run('push', tag)
-        return tag_msg, push_msg
+    def tag(self, tag: str) -> str:
+        return self._run('tag', tag)
 
 
 if __name__ == '__main__':
@@ -119,9 +117,9 @@ if __name__ == '__main__':
         if args.commit:
             git.commit(args.commit)
         if args.push:
-            git.push()
+            git.push('origin')
         if args.tag:
-            git.tag(f'v{MAJOR}.{MINOR}', True)
+            git.tag(f'v{MAJOR}.{MINOR}')
 
     if args.action == 'build':
         ProjectBuilder(ROOT_DIR).build('wheel', output_directory='build')
