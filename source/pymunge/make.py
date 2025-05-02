@@ -121,7 +121,7 @@ if __name__ == '__main__':
         if args.push:
             git.push('origin')
         if args.tag:
-            print(git.tag(f'v{MAJOR}.{MINOR}'), 'origin')
+            git.tag(f'v{MAJOR}.{MINOR}', 'origin')
 
     if args.action == 'build':
         ProjectBuilder(ROOT_DIR).build('wheel', output_directory='build')
