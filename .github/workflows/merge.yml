@@ -8,7 +8,11 @@ on:
 jobs:
   run-on-pr-merge:
     runs-on: ubuntu-latest
-    if: github.event.head_commit.message != ''  # only merge commit
+
+    if: github.actor != 'github-actions'
+
+    env:
+      SOURCE: ${{ github.workspace }}/source/pymunge
 
     steps:
       - name: Checkout repo
@@ -23,14 +27,14 @@ jobs:
 
       - name: Increase minor version
         run: |
-          python make.py version --increment minor
+          python {{ env.SOURCE }}/make.py version --increment minor
 
       - name: Commit changes
         run: |
-          git add version.py
+          git add {{ env.SOURCE }}/version.py
           git commit -m "Increase minor version" || echo "No changes"
 
       - name: Push tag
         run: |
-          python make.py git --tag
+          python {{ env.SOURCE }}/make.py git --tag
           git push
