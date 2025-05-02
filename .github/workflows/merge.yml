@@ -27,14 +27,14 @@ jobs:
 
       - name: Increase minor version
         run: |
-          python {{ env.SOURCE }}/make.py version --increment minor
+          python ${{ env.SOURCE }}/make.py version --increment minor
 
       - name: Commit changes
         run: |
-          git add {{ env.SOURCE }}/version.py
+          git add ${{ env.SOURCE }}/version.py
           git commit -m "Increase minor version" || echo "No changes"
 
       - name: Push tag
         run: |
-          python {{ env.SOURCE }}/make.py git --tag
+          python ${{ env.SOURCE }}/make.py git --tag
           git push
