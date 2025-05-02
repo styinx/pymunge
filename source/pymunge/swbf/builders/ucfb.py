@@ -1,5 +1,3 @@
-from swbf.parsers.odf import Odf
-from swbf.builders.hash import fnv1a_32
 from util.enum import Enum
 
 
@@ -108,11 +106,16 @@ class NumberProperty(UcfbNode):
 
 
 class BinaryProperty(UcfbNode):
-    def __init__(self, magic: str, buffer: bytearray):
+    def __init__(self, magic: str, buffer: bytearray, pad: bool = True):
         UcfbNode.__init__(self)
 
         self.magic: str = magic
         self.buffer: bytearray = buffer
+
+        if pad:
+            alignment = len(self.buffer) % 4
+            if alignment != 0:
+                self.buffer += bytes([0] * (4 - alignment))
 
     def __len__(self) -> int:
         # MAGIC , SIZE , buffer
@@ -134,20 +137,22 @@ class Chunk(UcfbNode):
         return 4 + 4 + sum(map(len, self.children))
 
     def data(self) -> bytearray:
-        self.buffer += string_data(self.magic)
-        self.buffer += int32_data(len(self) - 4 - 4) # no MAGIC and SIZE
+        buffer = bytearray()
+        buffer += string_data(self.magic)
+        buffer += int32_data(len(self) - 4 - 4) # no MAGIC and SIZE
 
         for child in self.children:
-            self.buffer += child.data()
+            buffer += child.data()
 
         padding = len(self.buffer) % 4
         if padding != 0:
-            self.buffer += string_data('\0' * (4 - padding))
+            buffer += string_data('\0' * (4 - padding))
 
-        return self.buffer
+        return buffer
 
     def dump(self, width: int = 16):
         dump: str = ''
+        buffer = self.data()
 
         dump += ' ' * 8
         for idx in range(width):
@@ -156,14 +161,14 @@ class Chunk(UcfbNode):
 
         row: int = 0
         pos: int = 0
-        while pos < len(self.buffer):
+        while pos < len(buffer):
 
-            buffer = self.buffer[pos:pos+width]
-            buf_len = len(buffer)
+            line = buffer[pos:pos+width]
+            buf_len = len(line)
 
             dump += f'{row:08X}'
             for idx in range(buf_len):
-                dump += f' {buffer[idx]:02X}'
+                dump += f' {line[idx]:02X}'
 
             if buf_len < width:
                 for idx in range(width - buf_len):
@@ -171,7 +176,7 @@ class Chunk(UcfbNode):
 
             dump += '  '
             for idx in range(buf_len):
-                sym = buffer[idx]
+                sym = line[idx]
 
                 # Decode only ASCII
                 if 0x20 <= sym <= 0x7E:

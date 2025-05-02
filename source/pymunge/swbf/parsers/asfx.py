@@ -1,11 +1,12 @@
-import sys
 from pathlib import Path
+import sys
+
 from parxel.lexer import Lexer
-from parxel.parser import Parser
-from parxel.nodes import Node, Document, LexicalNode
+from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
+
+from app.registry import FileRegistry, Dependency
 from swbf.parsers.format import Format
-from registry import FileRegistry, Dependency
 from util.logging import get_logger
 from util.enum import Enum
 

@@ -1,8 +1,11 @@
+from argparse import ArgumentParser, Namespace
 from os import getcwd
 from pathlib import Path
-from argparse import ArgumentParser, Namespace
-from munger import Munger
+from sys import exit
+
+from app.munger import Munger
 from util.logging import LogLevel, get_logger
+from version import STRING as VERSION_STRING
 
 
 BASE_DIR = Path(__file__).parent
@@ -22,6 +25,7 @@ def main():
     parser = ArgumentParser('pymunge')
     parser.add_argument('-b', '--binary-dir', type=MungePath, default=Path(getcwd()))
     parser.add_argument('-c', '--colormode', action='store_true', default=False)
+    parser.add_argument('-d', '--dry-run', action='store_true', default=False)
     parser.add_argument('-i', '--interactive', action='store_true', default=False)
     parser.add_argument('-l', '--log-level', type=str, default=LogLevel.Info, choices=list(LogLevel))
     parser.add_argument('-m', '--munge-mode', type=str, default=Munger.Mode.Full, choices=list(Munger.Mode))
@@ -29,6 +33,7 @@ def main():
     parser.add_argument('-p', '--platform', type=str, default=Munger.Platform.PC, choices=list(Munger.Platform))
     parser.add_argument('-s', '--source', type=MungePath, default=Path(getcwd()))
     parser.add_argument('-t', '--target', type=MungePath)
+    parser.add_argument('-v', '--version', action='store_true', default=False)
 
     subparsers = parser.add_subparsers(dest='tool')
 
@@ -37,6 +42,11 @@ def main():
     scriptmunge = subparsers.add_parser(Munger.Tool.ScriptMunge)
 
     args = parser.parse_args()
+
+    if args.version:
+        print(VERSION_STRING)
+        return 0
+
     logger = get_logger('pymunge', Path(getcwd()), color_mode=args.colormode)
 
     logger.debug(f'debug')
@@ -51,6 +61,7 @@ def main():
         logger.info(f'Color mode:       "{args.colormode}"')
         logger.info(f'Interactive:      "{args.interactive}"')
         logger.info(f'No GUI:           "{args.no_gui}"')
+        logger.info(f'Dry run:          "{args.dry_run}"')
         logger.info(f'Munge platform:   "{args.platform}"')
         logger.info(f'Munge mode:       "{args.munge_mode}"')
         logger.info(f'Binary directory: "{args.binary_dir}"')
@@ -65,4 +76,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    exit(main())

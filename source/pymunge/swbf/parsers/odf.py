@@ -1,12 +1,13 @@
-import sys
 from pathlib import Path
-from parxel.parser import Parser
-from parxel.nodes import Node, Document, LexicalNode
+import re
+
+from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
+
+from app.registry import FileRegistry, Dependency
 from swbf.parsers.format import Format
-from registry import FileRegistry
-from util.logging import get_logger
 from util.enum import Enum
+from util.logging import get_logger
 
 
 logger = get_logger(__name__)
@@ -36,6 +37,15 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
 
+class Reference(Value, Dependency):
+    RE_FILE = re.compile(r'"\w+\.\w+"')
+    def __init__(self, tokens: list[Token], parent: Node = None):
+        Value.__init__(self, tokens, parent)
+
+        filepath = Path(self.raw())
+        Dependency.__init__(self, filepath.resolve())
+
+
 class Section(LexicalNode):
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
@@ -57,7 +67,7 @@ class Odf(Format):
        WeaponClass = 'WeaponClas'
 
     class Key(Enum):
-       abandon = 'abandon'
+       Abandon = 'abandon'
        Acceleration = 'Acceleration'
        Acceleraton = 'Acceleraton'
        AcquiredTargetSound = 'AcquiredTargetSound'
@@ -183,7 +193,7 @@ class Odf(Format):
        BuildingHealth = 'BuildingHealth'
        BuildingRebuild = 'BuildingRebuild'
        BuildingScale = 'BuildingScale'
-       BUILDINGSECTION = 'BUILDINGSECTION'
+       BuildingSection = 'BUILDINGSECTION'
        BuildModelOdf = 'BuildModelOdf'
        BuildPoint = 'BuildPoint'
        BuiltCollision = 'BuiltCollision'
@@ -191,7 +201,7 @@ class Odf(Format):
        CableLength = 'CableLength'
        CameraDistance = 'CameraDistance'
        CameraHeight = 'CameraHeight'
-       CAMERASECTION = 'CAMERASECTION'
+       CameraSection = 'CAMERASECTION'
        CanDeflect = 'CanDeflect'
        CapturedSound = 'CapturedSound'
        CapturePosts = 'CapturePosts'
@@ -215,7 +225,7 @@ class Odf(Format):
        ChunkNodeName = 'ChunkNodeName'
        ChunkOmega = 'ChunkOmega'
        ChunkPhysics = 'ChunkPhysics'
-       CHUNKSECTION = 'CHUNKSECTION'
+       ChunkSection = 'CHUNKSECTION'
        ChunkSimpleFriction = 'ChunkSimpleFriction'
        ChunkSmokeEffect = 'ChunkSmokeEffect'
        ChunkSmokeNodeName = 'ChunkSmokeNodeName'
@@ -241,7 +251,7 @@ class Odf(Format):
        ClassHisDEF = 'ClassHisDEF'
        ClassImpATK = 'ClassImpATK'
        ClassImpDEF = 'ClassImpDEF'
-       classLabel = 'classLabel'
+       ClassLabel_ = 'classLabel' # TODO
        ClassLabel = 'ClassLabel'
        ClassLocATK = 'ClassLocATK'
        ClassLocDEF = 'ClassLocDEF'
@@ -257,11 +267,11 @@ class Odf(Format):
        CockpitChatterStream = 'CockpitChatterStream'
        CockpitTension = 'CockpitTension'
        CodeInitialWidth = 'CodeInitialWidth'
-       Collision = 'Collision'
-       COLLISION = 'COLLISION'
+       Collision_ = 'Collision' # TODO
+       Collision = 'COLLISION'
        CollisionInflict = 'CollisionInflict'
        CollisionLowResRootScale = 'CollisionLowResRootScale'
-       collisionName = 'collisionName'
+       CollisionName = 'collisionName'
        CollisionOtherSound = 'CollisionOtherSound'
        CollisionRootScale = 'CollisionRootScale'
        CollisionScale = 'CollisionScale'
@@ -314,7 +324,7 @@ class Odf(Format):
        Deceleration = 'Deceleration'
        DeflectSound = 'DeflectSound'
        DenyFlyerLand = 'DenyFlyerLand'
-       deploy = 'deploy'
+       Deploy = 'deploy'
        DestroyedGeometryName = 'DestroyedGeometryName'
        DetatchSound = 'DetatchSound'
        DisableForCloneWars = 'DisableForCloneWars'
@@ -330,7 +340,7 @@ class Odf(Format):
        DropShadowSize = 'DropShadowSize'
        Effect = 'Effect'
        EffectRegion = 'EffectRegion'
-       eject = 'eject'
+       Eject = 'eject'
        Emitter = 'Emitter'
        EnableDeathExplosions = 'EnableDeathExplosions'
        EnemyColor = 'EnemyColor'
@@ -385,7 +395,7 @@ class Odf(Format):
        FlickerPeriod = 'FlickerPeriod'
        FlickerType = 'FlickerType'
        FlyerBan = 'FlyerBan'
-       FLYERSECTION = 'FLYERSECTION'
+       FlyerSection = 'FLYERSECTION'
        FoleyFXClass = 'FoleyFXClass'
        FoleyFXGroup = 'FoleyFXGroup'
        FootBoneLeft = 'FootBoneLeft'
@@ -408,15 +418,15 @@ class Odf(Format):
        ForwardTurnSpeed = 'ForwardTurnSpeed'
        Friction = 'Friction'
        FriendlyColor = 'FriendlyColor'
-       frontal_target = 'frontal_target'
+       FrontalTarget = 'frontal_target'
        FXName = 'FXName'
        GeometryAddon = 'GeometryAddon'
        GeometryColorMax = 'GeometryColorMax'
        GeometryColorMin = 'GeometryColorMin'
        GeometryLowRes = 'GeometryLowRes'
-       geometryName = 'geometryName'
+       GeometryName_ = 'geometryName' # TODO
        GeometryName = 'GeometryName'
-       geometryScale = 'geometryScale'
+       GeometryScale_ = 'geometryScale' # TODO
        GeometryScale = 'GeometryScale'
        GlowLength = 'GlowLength'
        Gravity = 'Gravity'
@@ -502,7 +512,7 @@ class Odf(Format):
        JetJump = 'JetJump'
        JetPush = 'JetPush'
        JetType = 'JetType'
-       jump = 'jump'
+       Jump = 'jump'
        JumpDeduction = 'JumpDeduction'
        JumpSound = 'JumpSound'
        KickBuildup = 'KickBuildup'
@@ -538,12 +548,12 @@ class Odf(Format):
        Lighting = 'Lighting'
        LightningEffect = 'LightningEffect'
        LightRadius = 'LightRadius'
-       lights = 'lights'
+       Lights = 'lights'
        LocalsColor = 'LocalsColor'
        LockedOnSound = 'LockedOnSound'
        LockedSound = 'LockedSound'
        LockOffAngle = 'LockOffAngle'
-       lockOnAngle = 'lockOnAngle'
+       LockOnAngle_ = 'lockOnAngle' # TODO
        LockOnAngle = 'LockOnAngle'
        LockOnRange = 'LockOnRange'
        LockOnTime = 'LockOnTime'
@@ -639,8 +649,8 @@ class Odf(Format):
        NeutralizeTime = 'NeutralizeTime'
        NextAimer = 'NextAimer'
        NextBarrel = 'NextBarrel'
-       NextCharge = 'NextCharge'
-       NEXTCHARGE = 'NEXTCHARGE'
+       NextCharge_ = 'NextCharge' # TODO
+       NextCharge = 'NEXTCHARGE'
        NextDropItem = 'NextDropItem'
        NoCombatInterrupt = 'NoCombatInterrupt'
        NoDeathExplosions = 'NoDeathExplosions'
@@ -695,9 +705,9 @@ class Odf(Format):
        PilotPosition = 'PilotPosition'
        PilotSkillRepairScale = 'PilotSkillRepairScale'
        PilotType = 'PilotType'
-       pitch_down = 'pitch_down'
-       pitch_up = 'pitch_up'
-       pitch = 'pitch'
+       PitchDown = 'pitch_down'
+       PitchUp = 'pitch_up'
+       Pitch = 'pitch'
        PitchDamp = 'PitchDamp'
        PitchFilter = 'PitchFilter'
        PitchLimits = 'PitchLimits'
@@ -792,7 +802,7 @@ class Odf(Format):
        ShockFadeOutGain = 'ShockFadeOutGain'
        ShockFadeOutTime = 'ShockFadeOutTime'
        ShockSound = 'ShockSound'
-       shotdelay = 'shotdelay'
+       Shotdelay_ = 'shotdelay' # TODO
        ShotDelay = 'ShotDelay'
        ShotElevate = 'ShotElevate'
        ShotPatternCount = 'ShotPatternCount'
@@ -810,7 +820,7 @@ class Odf(Format):
        SoldierAmmo = 'SoldierAmmo'
        SoldierAnimation = 'SoldierAnimation'
        SoldierBan = 'SoldierBan'
-       soldierCollision = 'soldierCollision'
+       SoldierCollision_ = 'soldierCollision' # TODO
        Soldiercollision = 'Soldiercollision'
        SoldierCollision = 'SoldierCollision'
        SoldierCollisionOnly = 'SoldierCollisionOnly'
@@ -836,12 +846,12 @@ class Odf(Format):
        StandMoveSpread = 'StandMoveSpread'
        StandSound = 'StandSound'
        StandStillSpread = 'StandStillSpread'
-       static = 'static'
+       Static_ = 'static' # TODO
        Static = 'Static'
        StatusTexture = 'StatusTexture'
-       steer_left = 'steer_left'
-       steer_right = 'steer_right'
-       steer = 'steer'
+       SteerLeft = 'steer_left'
+       SteerRight = 'steer_right'
+       Steer = 'steer'
        StickAnimal = 'StickAnimal'
        StickBuilding = 'StickBuilding'
        StickBuildingDead = 'StickBuildingDead'
@@ -856,9 +866,9 @@ class Odf(Format):
        StompEffect = 'StompEffect'
        StompThreshold = 'StompThreshold'
        StoppedTurnSpeed = 'StoppedTurnSpeed'
-       strafe_left = 'strafe_left'
-       strafe_right = 'strafe_right'
-       strafe = 'strafe'
+       StrafeLeft = 'strafe_left'
+       StrafeRight = 'strafe_right'
+       Strafe = 'strafe'
        StrafeRollAngle = 'StrafeRollAngle'
        StrafeSpeed = 'StrafeSpeed'
        Strategic_Filter1 = 'Strategic_Filter1'
@@ -890,17 +900,17 @@ class Odf(Format):
        TargetNeutral = 'TargetNeutral'
        TargetPerson = 'TargetPerson'
        TargetVehicle = 'TargetVehicle'
-       TEMP_AnimationSpeed = 'TEMP_AnimationSpeed'
-       TEMP_Type = 'TEMP_Type'
+       TempAnimationSpeed = 'TEMP_AnimationSpeed'
+       TempType = 'TEMP_Type'
        TerrainCollision = 'TerrainCollision'
        TerrainCollisionPrim = 'TerrainCollisionPrim'
        TerrainLeft = 'TerrainLeft'
        TerrainRight = 'TerrainRight'
        Texture = 'Texture'
        ThirdPersonFOV = 'ThirdPersonFOV'
-       throttle_down = 'throttle_down'
-       throttle_up = 'throttle_up'
-       throttle = 'throttle'
+       ThrottleDown = 'throttle_down'
+       ThrottleUp = 'throttle_up'
+       Throttle = 'throttle'
        ThrustAttachOffset = 'ThrustAttachOffset'
        ThrustAttachPoint = 'ThrustAttachPoint'
        ThrustEffect = 'ThrustEffect'
@@ -912,12 +922,12 @@ class Odf(Format):
        TickSoundPitch = 'TickSoundPitch'
        TiltValue = 'TiltValue'
        TowCableCollision = 'TowCableCollision'
-       track_pitch_minus = 'track_pitch_minus'
-       track_pitch_plus = 'track_pitch_plus'
-       track_pitch_reset = 'track_pitch_reset'
-       track_yaw_minus = 'track_yaw_minus'
-       track_yaw_plus = 'track_yaw_plus'
-       track_yaw_reset = 'track_yaw_reset'
+       TrackPitchMinus = 'track_pitch_minus'
+       TrackPitchPlus = 'track_pitch_plus'
+       TrackPitchReset = 'track_pitch_reset'
+       TrackYawMinus = 'track_yaw_minus'
+       TrackYawPlus = 'track_yaw_plus'
+       TrackYawReset = 'track_yaw_reset'
        TrackCenter = 'TrackCenter'
        TrackDeathOnAttach = 'TrackDeathOnAttach'
        TrackingSound = 'TrackingSound'
@@ -953,14 +963,14 @@ class Odf(Format):
        TurretNodeName = 'TurretNodeName'
        TurretPitchSound = 'TurretPitchSound'
        TurretPitchSoundPitch = 'TurretPitchSoundPitch'
-       TURRETSECTION = 'TURRETSECTION'
+       TurretSection = 'TURRETSECTION'
        TurretStartSound = 'TurretStartSound'
        TurretStopSound = 'TurretStopSound'
        TurretYawSound = 'TurretYawSound'
        TurretYawSoundPitch = 'TurretYawSoundPitch'
        UnbuiltGeometryName = 'UnbuiltGeometryName'
        UnbuiltHoloOdf = 'UnbuiltHoloOdf'
-       unitName = 'unitName'
+       UnitName = 'unitName'
        UnitType = 'UnitType'
        UprightLowResModel = 'UprightLowResModel'
        UprightWaterDamageHeight = 'UprightWaterDamageHeight'
@@ -977,11 +987,11 @@ class Odf(Format):
        Value_DEF_Republic = 'Value_DEF_Republic'
        ValueBleed = 'ValueBleed'
        VehicleAmmo = 'VehicleAmmo'
-       vehiclecollision = 'vehiclecollision'
-       Vehiclecollision = 'Vehiclecollision'
+       VehicleCollision = 'vehiclecollision'
+       VehicleCollision = 'Vehiclecollision'
        VehicleCollision = 'VehicleCollision'
-       vehiclecollisiononly = 'vehiclecollisiononly'
-       VehicleCollisiononly = 'VehicleCollisiononly'
+       VehicleCollisionOnly = 'vehiclecollisiononly'
+       VehicleCollisionOnly = 'VehicleCollisiononly'
        VehicleCollisionOnly = 'VehicleCollisionOnly'
        VehicleCollisionPrim = 'VehicleCollisionPrim'
        VehicleCollisionSound = 'VehicleCollisionSound'
@@ -1033,13 +1043,13 @@ class Odf(Format):
        VO_Rep_RepCapture = 'VO_Rep_RepCapture'
        VO_Rep_RepInDispute = 'VO_Rep_RepInDispute'
        VO_Rep_RepInfo = 'VO_Rep_RepInfo'
-       VO_Rep_RepLost = 'VO_Rep_RepLost'
-       VO_Rep_RepSaved = 'VO_Rep_RepSaved'
+       Vo_Rep_RepLost = 'VO_Rep_RepLost'
+       Vo_Rep_RepSaved = 'VO_Rep_RepSaved'
        WakeEffect = 'WakeEffect'
        WakeWaterSplashEffect = 'WakeWaterSplashEffect'
        WalkerLegPair = 'WalkerLegPair'
        WalkerOrientRoll = 'WalkerOrientRoll'
-       WALKERSECTION = 'WALKERSECTION'
+       WalkerSection = 'WALKERSECTION'
        WalkerWidth = 'WalkerWidth'
        WaterDamageAmount = 'WaterDamageAmount'
        WaterDamageInterval = 'WaterDamageInterval'
@@ -1048,10 +1058,10 @@ class Odf(Format):
        WaterWadingSound = 'WaterWadingSound'
        WaverRate = 'WaverRate'
        WaverTurn = 'WaverTurn'
-       weapon_fire = 'weapon_fire'
-       weapon_next = 'weapon_next'
-       weapon_prev = 'weapon_prev'
-       weapon_special = 'weapon_special'
+       WeaponFire = 'weapon_fire'
+       WeaponNext = 'weapon_next'
+       WeaponPrev = 'weapon_prev'
+       WeaponSpecial = 'weapon_special'
        WeaponAmmo = 'WeaponAmmo'
        WeaponAmmo1 = 'WeaponAmmo1'
        WeaponAmmo2 = 'WeaponAmmo2'
@@ -1071,7 +1081,7 @@ class Odf(Format):
        WeaponName3 = 'WeaponName3'
        WeaponName4 = 'WeaponName4'
        WeaponSection = 'WeaponSection'
-       WEAPONSECTION = 'WEAPONSECTION'
+       WeaponSection = 'WEAPONSECTION'
        WiggleAmount = 'WiggleAmount'
        WiggleSpeed = 'WiggleSpeed'
        WindSound = 'WindSound'
@@ -1080,9 +1090,9 @@ class Odf(Format):
        YawSpread = 'YawSpread'
        YawTurnFactor = 'YawTurnFactor'
        YOffset = 'YOffset'
-       zoom_factor_minus = 'zoom_factor_minus'
-       zoom_factor_plus = 'zoom_factor_plus'
-       zoom_factor_reset = 'zoom_factor_reset'
+       ZoomFactorMinus = 'zoom_factor_minus'
+       ZoomFactorPlus = 'zoom_factor_plus'
+       ZoomFactorReset = 'zoom_factor_reset'
        ZoomFirstPerson = 'ZoomFirstPerson'
        ZoomMax = 'ZoomMax'
        ZoomMin = 'ZoomMin'
@@ -1137,8 +1147,15 @@ class Odf(Format):
 
                 self.consume_until(TK.LineFeed)
 
-                value = Value(self.collect_tokens())
-                key.add(value)
+                value_tokens = self.collect_tokens()
+                value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
+
+                if re.match(Reference.RE_FILE, value_text) is not None:
+                    reference = Reference(value_tokens)
+                    key.add(reference)
+                else:
+                    value = Value(value_tokens)
+                    key.add(value)
 
                 self.discard()  # \n
 

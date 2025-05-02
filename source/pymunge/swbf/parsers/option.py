@@ -1,11 +1,12 @@
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
-from parxel.parser import Parser
-from parxel.nodes import Node, Document, LexicalNode
+
+from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
+
+from app.registry import FileRegistry
 from swbf.parsers.format import Format
-from registry import FileRegistry
 from util.logging import get_logger
 from util.enum import Enum
 

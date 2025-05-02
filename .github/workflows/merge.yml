@@ -1,0 +1,36 @@
+name: Merge PR into master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  run-on-pr-merge:
+    runs-on: ubuntu-latest
+    if: github.event.head_commit.message != ''  # only merge commit
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+         token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Increase minor version
+        run: |
+          python make.py version --increment minor
+
+      - name: Commit changes
+        run: |
+          git add version.py
+          git commit -m "Increase minor version" || echo "No changes"
+
+      - name: Push tag
+        run: |
+          python make.py git --tag
+          git push

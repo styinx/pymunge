@@ -9,12 +9,15 @@ build-backend   = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["pymunge"]
 
+[tool.setuptools.dynamic]
+version = { attr="pymunge.__VERSION__" }
+
 [tool.setuptools.package-dir]
 "" = "source"
 
 [project]
 name            = "swbf-pymunge"
-version         = "0.0.1"
+dynamic         = ["version"]
 requires-python = ">=3.11"
 description     = "SWBF Python munger"
 readme          = "README.md"

@@ -1,11 +1,13 @@
-import re
 from pathlib import Path
-from parxel.nodes import Node, Document, LexicalNode
+import re
+
+from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
-from registry import FileRegistry, Dependency
+
+from app.registry import Dependency, FileRegistry
 from swbf.parsers.format import Format
-from util.logging import get_logger
 from util.enum import Enum
+from util.logging import get_logger
 
 
 logger = get_logger(__name__)

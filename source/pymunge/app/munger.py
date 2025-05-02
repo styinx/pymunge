@@ -1,14 +1,15 @@
 from argparse import Namespace
+from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
-from registry import FileRegistry
+
+from app.registry import FileRegistry
+from app.ui import gui
 from swbf.parsers.odf import Odf
 from swbf.parsers.req import Req
 from swbf.builders.odf import Class
 from swbf.builders.ucfb import Ucfb
 from util.enum import Enum
 from util.logging import get_logger
-from multiprocessing import cpu_count as CPUS, Process, Queue
-from ui.ui import gui
 
 
 logger = get_logger(__name__)
@@ -87,11 +88,17 @@ class Munger:
             tree = parser.parse()
             builder = builder_type(tree)
             builder.build()
+
+            ucfb = Ucfb()
+            ucfb.add(builder)
+            ucfb.data()
+            print(ucfb.dump())
+
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
                 parser = parser_type(registry=self.registry, filepath=entry, logger=self.logger)
                 tree = parser.parse()
                 builder = builder_type(tree)
                 builder.build()
+                print(builder.dump())
 
-        print(builder.dump())

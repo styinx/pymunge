@@ -2,7 +2,7 @@ from swbf.builders.ucfb import int32_data
 from swbf.builders.ucfb import StringProperty, BinaryProperty
 from swbf.builders.ucfb import Magic, Chunk
 from swbf.builders.hash import fnv1a_32
-from swbf.parsers.odf import Odf, Section, Key, Value
+from swbf.parsers.odf import Odf, Section, Key, Reference, Value
 
 
 class Class(Chunk):
@@ -26,24 +26,24 @@ class Class(Chunk):
                         base_property = StringProperty('BASE', class_label.value.replace('"', ''))
                         self.add(base_property)
 
-                        name_property = StringProperty('TYPE', self.tree.filepath.name) # odf name
+                        name_property = StringProperty('TYPE', self.tree.filepath.stem) # odf name
                         self.add(name_property)
 
                     else:
-                        val = next(it)
-                        if not isinstance(val, Value):
-                            raise Exception('TODO')
+                        # TODO: filter out duplicates and invalid props
 
-                        prop = BinaryProperty('PROP', int32_data(fnv1a_32(node.name)) + val.value.replace('"', '').encode('utf-8'))
-                        self.add(prop)
+                        val = next(it)
+                        if isinstance(val, Reference):
+                            prop = BinaryProperty('PROP', int32_data(fnv1a_32(node.name)) + val.filepath.stem.replace('"', '').encode('utf-8'))
+                            self.add(prop)
+                        elif isinstance(val, Value):
+                            prop = BinaryProperty('PROP', int32_data(fnv1a_32(node.name)) + val.value.replace('"', '').encode('utf-8'))
+                            self.add(prop)
+                        else:
+                            raise Exception('TODO')
 
         except StopIteration:
             pass
 
-        self.data()
-
         return self
-
-
-
 

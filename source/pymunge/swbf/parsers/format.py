@@ -1,23 +1,25 @@
 import io
-import sys
 from pathlib import Path
+import sys
+
 from parxel.lexer import Lexer
-from parxel.token import Token
 from parxel.nodes import Document
-from parxel.parser import Parser
-from registry import FileRegistry, Dependency
+from parxel.parser import TextParser
+from parxel.token import Token
+
+from app.registry import FileRegistry, Dependency
 from util.logging import get_logger
 
 
 logger = get_logger(__name__)
 
 
-class Format(Document, Parser):
+class Format(Document, TextParser):
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
         self.registry: FileRegistry = registry
 
         Document.__init__(self, filepath=filepath)
-        Parser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
+        TextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         raise NotImplementedError('This is an abstract base class!')
