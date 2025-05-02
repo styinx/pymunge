@@ -61,8 +61,10 @@ class Git:
     def push(self, remote: str) -> str:
         return self._run('push', remote)
 
-    def tag(self, tag: str) -> str:
-        return self._run('tag', tag)
+    def tag(self, tag: str, remote: str) -> str:
+        tag_msg = self._run('tag', tag)
+        push_msg = self._run('push', remote, tag)
+        return tag_msg, push_msg
 
 
 if __name__ == '__main__':
@@ -119,7 +121,7 @@ if __name__ == '__main__':
         if args.push:
             git.push('origin')
         if args.tag:
-            git.tag(f'v{MAJOR}.{MINOR}')
+            print(git.tag(f'v{MAJOR}.{MINOR}'), 'origin')
 
     if args.action == 'build':
         ProjectBuilder(ROOT_DIR).build('wheel', output_directory='build')

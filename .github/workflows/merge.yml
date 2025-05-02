@@ -44,4 +44,3 @@ jobs:
       - name: Push tag
         run: |
           python ${{ env.SOURCE }}/make.py git --tag
-          git push
