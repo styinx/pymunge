@@ -3,7 +3,7 @@ requires        = [
     "build~=1.2.2",
     "parxel~=0.0.5",
     "setuptools>=61.0",
-    "windows-curses~=2.4.1"
+    "windows-curses~=2.4.1; sys_platform == 'win32'"
 ]
 build-backend   = "setuptools.build_meta"
 
