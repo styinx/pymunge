@@ -21,6 +21,10 @@ class Diagnostic:
 
 
 class Munger:
+    """
+    Entry point of the munging process.
+    """
+
     class Mode(Enum):
         Side = 'side'
         Sound = 'sound'
@@ -28,6 +32,9 @@ class Munger:
         Full = 'full'
 
     class Tool(Enum):
+        """
+        If specified the munge tool filters the input of the munging process.
+        """
         OdfMunge = 'OdfMunge'
         ModelMunge = 'ModelMunge'
         ScriptMunge = 'ScriptMunge'

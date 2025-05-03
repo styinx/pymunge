@@ -1,3 +1,7 @@
+"""
+pymunge
+"""
+
 from .version import NUMBER as VERSION_NUMBER
 
 

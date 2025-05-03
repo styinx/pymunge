@@ -1,4 +1,14 @@
 def fnv1a_32(s: str) -> int:
+    """
+    Customized `fnv1a (32-bit variant) algorithm <https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function>`_.
+    Converts unsigned 32 bit integer hash from the input string.
+    The input string is converted to lowercase () while hashing.
+
+    :param str s:   The input string.
+
+    :return:        The calculated hash value.
+    :rtype:         int
+    """
     h = 0x811C9DC5
     for c in s:
         h = (h ^ (ord(c) | 0x20)) * 0x1000193
