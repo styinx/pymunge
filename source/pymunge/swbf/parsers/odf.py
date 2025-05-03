@@ -64,7 +64,7 @@ class Odf(Format):
        InstanceProperties = 'InstanceProperties'
        OrdnanceClass = 'OrdnanceClass'
        Properties = 'Properties'
-       WeaponClass = 'WeaponClas'
+       WeaponClass = 'WeaponClass'
 
     class Key(Enum):
        Abandon = 'abandon'

@@ -1,7 +1,7 @@
 from swbf.builders.ucfb import int32_data
 from swbf.builders.ucfb import StringProperty, BinaryProperty
 from swbf.builders.ucfb import Magic, Chunk
-from swbf.builders.hash import fnv1a_32
+from swbf.builders.fnv1a import fnv1a_32
 from swbf.parsers.odf import Odf, Section, Key, Reference, Value
 
 
