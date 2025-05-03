@@ -41,6 +41,7 @@ dependencies    = [
 
 [project.optional-dependencies]
 docs = [
+    "furo~=2024.8.6",
     "Sphinx~=8.2.3",
     "yapf~=0.43.0"
 ]
