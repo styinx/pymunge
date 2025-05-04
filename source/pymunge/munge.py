@@ -31,6 +31,7 @@ def main():
     parser.add_argument('-m', '--munge-mode', type=str, default=Munger.Mode.Full, choices=list(Munger.Mode))
     parser.add_argument('-n', '--no-gui', action='store_true', default=False)
     parser.add_argument('-p', '--platform', type=str, default=Munger.Platform.PC, choices=list(Munger.Platform))
+    parser.add_argument('-r', '--resolve-dependencies', action='store_true', default=True)
     parser.add_argument('-s', '--source', type=MungePath, default=Path(getcwd()))
     parser.add_argument('-t', '--target', type=MungePath)
     parser.add_argument('-v', '--version', action='store_true', default=False)
@@ -47,7 +48,7 @@ def main():
         print(VERSION_STRING)
         return 0
 
-    logger = get_logger('pymunge', Path(getcwd()), color_mode=args.colormode)
+    logger = get_logger('pymunge', path=Path(getcwd()), level=args.log_level, color_mode=args.colormode)
 
     logger.debug(f'debug')
     logger.info(f'info')
