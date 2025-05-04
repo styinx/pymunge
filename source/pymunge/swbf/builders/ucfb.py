@@ -59,6 +59,7 @@ def int32_data(number: int) -> bytes:
 
 
 class UcfbNode:
+
     def __init__(self):
         self.parent = None
         self.children: list = []
@@ -69,6 +70,7 @@ class UcfbNode:
 
 
 class StringProperty(UcfbNode):
+
     def __init__(self, magic: str, string: str, pad: bool = True):
         UcfbNode.__init__(self)
 
@@ -91,6 +93,7 @@ class StringProperty(UcfbNode):
 
 
 class NumberProperty(UcfbNode):
+
     def __init__(self, magic: str, number: int):
         UcfbNode.__init__(self)
 
@@ -106,6 +109,7 @@ class NumberProperty(UcfbNode):
 
 
 class BinaryProperty(UcfbNode):
+
     def __init__(self, magic: str, buffer: bytearray, pad: bool = True):
         UcfbNode.__init__(self)
 
@@ -126,6 +130,7 @@ class BinaryProperty(UcfbNode):
 
 
 class Chunk(UcfbNode):
+
     def __init__(self, magic: str):
         UcfbNode.__init__(self)
 
@@ -139,7 +144,7 @@ class Chunk(UcfbNode):
     def data(self) -> bytearray:
         buffer = bytearray()
         buffer += string_data(self.magic)
-        buffer += int32_data(len(self) - 4 - 4) # no MAGIC and SIZE
+        buffer += int32_data(len(self) - 4 - 4)  # no MAGIC and SIZE
 
         for child in self.children:
             buffer += child.data()
@@ -163,7 +168,7 @@ class Chunk(UcfbNode):
         pos: int = 0
         while pos < len(buffer):
 
-            line = buffer[pos:pos+width]
+            line = buffer[pos:pos + width]
             buf_len = len(line)
 
             dump += f'{row:08X}'
@@ -193,11 +198,13 @@ class Chunk(UcfbNode):
 
 class Ucfb(Chunk):
     "Universal Chunk Format Block (UCFB)"
+
     def __init__(self):
         Chunk.__init__(self, Magic.Ucfb)
 
 
 class Script(Chunk):
+
     def __init__(self, name: str, info: str, body: bytearray):
         Chunk.__init__(self, Magic.Script)
 
@@ -211,22 +218,24 @@ class Script(Chunk):
 
 
 class Skeleton(Chunk):
+
     def __init__(self, name: str, root: str, properties: dict):
         Chunk.__init__(self, Magic.Skeleton)
 
-        info_property = StringProperty('INFO', name) # msh name
-        name_property = StringProperty('NAME', root) # root name
+        info_property = StringProperty('INFO', name)  # msh name
+        name_property = StringProperty('NAME', root)  # root name
 
         self.add(info_property)
         self.add(name_property)
 
 
 class Model(Chunk):
+
     def __init__(self, name: str, root: str, properties: dict):
         Chunk.__init__(self, Magic.Model)
 
-        name_property = StringProperty('NAME', name) # msh name
-        node_property = StringProperty('NODE', root) # root name
+        name_property = StringProperty('NAME', name)  # msh name
+        node_property = StringProperty('NODE', root)  # root name
         info_property = StringProperty('INFO', '?')
 
         self.add(name_property)
@@ -246,4 +255,3 @@ if __name__ == '__main__':
 
     ucfb.data()
     print(ucfb.dump())
-

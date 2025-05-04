@@ -81,6 +81,7 @@ class LogLevel(Enum):
 
 
 class ScopedLogger(logging.LoggerAdapter):
+
     def __init__(self, logger):
         super().__init__(logger, {})
         self._indent_level = 0
@@ -111,9 +112,9 @@ class ScopedLogger(logging.LoggerAdapter):
 class ColorFormatter(logging.Formatter):
     LevelStyle = {
         LogLevel.Debug: (Ansi.GreenForeground, Ansi.Italic),
-        LogLevel.Info: (Ansi.CyanForeground,),
-        LogLevel.Warning: (Ansi.YellowForeground,),
-        LogLevel.Error: (Ansi.RedForeground,),
+        LogLevel.Info: (Ansi.CyanForeground, ),
+        LogLevel.Warning: (Ansi.YellowForeground, ),
+        LogLevel.Error: (Ansi.RedForeground, ),
         LogLevel.Critical: (Ansi.RedForeground, Ansi.Bold),
     }
 

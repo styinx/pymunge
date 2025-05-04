@@ -10,12 +10,12 @@ from parxel.token import Token
 from app.registry import FileRegistry, Dependency
 from util.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
 class Format(Document, TextParser):
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
+
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
         self.registry: FileRegistry = registry
 
         Document.__init__(self, filepath=filepath)

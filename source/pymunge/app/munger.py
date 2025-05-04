@@ -11,11 +11,11 @@ from swbf.builders.ucfb import Ucfb
 from util.enum import Enum
 from util.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
 class Diagnostic:
+
     def __init__(self):
         pass
 
@@ -44,13 +44,13 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger = logger):
+    def __init__(self, args: Namespace, logger=logger):
         self.logger = logger
         self.source: Path = args.source
         self.filter: str = 'req'
         self.registry: FileRegistry = FileRegistry()
         self.diagnostic: Diagnostic = Diagnostic()
-        self.processes : list[Process] = []
+        self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
         if args.tool:
@@ -79,14 +79,8 @@ class Munger:
         #self.ui.join()
 
     def munge(self):
-        parsers = {
-            'req': Req,
-            'odf': Odf
-        }
-        builders = {
-            'req': Ucfb,
-            'odf': Class
-        }
+        parsers = {'req': Req, 'odf': Odf}
+        builders = {'req': Ucfb, 'odf': Class}
         parser_type = parsers.get(self.filter, Req)
         builder_type = builders.get(self.filter, Ucfb)
 
@@ -108,4 +102,3 @@ class Munger:
                 builder = builder_type(tree)
                 builder.build()
                 print(builder.dump())
-

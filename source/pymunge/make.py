@@ -3,7 +3,6 @@ Helper script that manages several aspects of the project.
 Each topic is put into a separate action.
 """
 
-
 from argparse import ArgumentParser
 from build import ProjectBuilder
 from datetime import datetime
@@ -14,20 +13,18 @@ from subprocess import PIPE, Popen
 from util.logging import Ansi, get_logger, LogLevel
 from version import MAJOR, MINOR, PATCH, BRANCH, HASH
 
-
 SOURCE_DIR = Path(__file__).parent
 ROOT_DIR = SOURCE_DIR.parent.parent
 VERSION_TEMPLATE = str(
-    'MAJOR: int = {MAJOR:d}\n'          # Number of releases
-    'MINOR: int = {MINOR:d}\n'          # Number of features (MRs or PRs)
-    'PATCH: int = {PATCH:d}\n'          # Number of commits since HASH
+    'MAJOR: int = {MAJOR:d}\n'  # Number of releases
+    'MINOR: int = {MINOR:d}\n'  # Number of features (MRs or PRs)
+    'PATCH: int = {PATCH:d}\n'  # Number of commits since HASH
     'HASH: str = \'{HASH:s}\'\n'
     'DATE: str = \'{DATE:s}\'\n'
     'BRANCH: str = \'{BRANCH:s}\'\n'
     'NUMBER: tuple[int, int, int] = ({MAJOR}, {MINOR:d}, {PATCH:d})\n'
     'STRING: str = \'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}\'\n'
 )
-
 
 logger = get_logger('make', color_mode=True)
 
@@ -66,6 +63,7 @@ def run(args, cwd: Path = Path(getcwd())):
 
 
 class Git:
+
     def __init__(self, path: Path = Path(getcwd())):
         self.args = []
         self.cwd = path
@@ -173,15 +171,16 @@ if __name__ == '__main__':
         DATE = datetime.now().strftime('%Y-%m-%d-%H-%M%z')
 
         with open(SOURCE_DIR / 'version.py', 'w+') as version_file:
-            version_file.write(VERSION_TEMPLATE.format(
-                MAJOR=MAJOR,
-                MINOR=MINOR,
-                PATCH=PATCH,
-                HASH=HASH,
-                DATE=DATE,
-                BRANCH=BRANCH,
-            ))
+            version_file.write(
+                VERSION_TEMPLATE.format(
+                    MAJOR=MAJOR,
+                    MINOR=MINOR,
+                    PATCH=PATCH,
+                    HASH=HASH,
+                    DATE=DATE,
+                    BRANCH=BRANCH,
+                )
+            )
 
         new_version = f'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}'
         logger.info(f'Sync version: {Ansi.bold(new_version)}')
-

@@ -10,11 +10,11 @@ from swbf.parsers.format import Format
 from util.logging import get_logger
 from util.enum import Enum
 
-
 logger = get_logger(__name__)
 
 
 class Comment(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -22,6 +22,7 @@ class Comment(LexicalNode):
 
 
 class Condition(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -32,6 +33,7 @@ class Condition(LexicalNode):
 
 
 class SoundEffect(LexicalNode, Dependency):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -45,6 +47,7 @@ class SoundEffect(LexicalNode, Dependency):
 
 
 class Switch(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -55,6 +58,7 @@ class Switch(LexicalNode):
 
 
 class Config(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -68,6 +72,7 @@ class Config(LexicalNode):
 
 
 class Value(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -81,6 +86,7 @@ class Value(LexicalNode):
 
 
 class Asfx(Format):
+
     class Switch(Enum):
         Resample = 'resample'
 
@@ -97,13 +103,13 @@ class Asfx(Format):
         _44100 = '44100'
 
     SwitchConfigValue = {
-        Switch.Resample : {
-            Config.Pc : [Value._22050, Value._44100],
-            Config.Ps2 : [Value._22050, Value._44100]
+        Switch.Resample: {
+            Config.Pc: [Value._22050, Value._44100],
+            Config.Ps2: [Value._22050, Value._44100]
         }
     }
 
-    def __init__(self, registry : FileRegistry, filepath: Path, tokens: list[Token] = None, logger = logger):
+    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
         Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
@@ -136,7 +142,7 @@ class Asfx(Format):
                 self.register_dependency(value)
 
                 while self.get().type == TK.Minus:
-                    self.discard() # -
+                    self.discard()  # -
 
                     self.consume_strict(TK.Word)
 
@@ -180,7 +186,7 @@ class Asfx(Format):
                     self.consume_while_any(TK.Space)
 
                 if isinstance(self.scope, Condition):
-                    self.collect_tokens() # Discard end of condition
+                    self.collect_tokens()  # Discard end of condition
                     self.exit_scope()
                 else:
                     condition = Condition(self.collect_tokens())

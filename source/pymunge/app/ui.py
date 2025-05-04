@@ -32,7 +32,7 @@ def gui():
 
     win_proc = curses.newwin(height_third * 2, width_third * 2, 0, 0)
     help = curses.newwin(height_third * 1, width_third * 1, 0, width_third * 2)
-    statusbar = curses.newwin(1, width, height -1, 0)
+    statusbar = curses.newwin(1, width, height - 1, 0)
 
     screen.clear()
     screen.refresh()
@@ -62,8 +62,6 @@ def gui():
         if key == ord('q'):
             running = False
 
-
     curses.nocbreak()
     curses.echo()
     curses.endwin()
-

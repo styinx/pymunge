@@ -10,11 +10,11 @@ from swbf.parsers.format import Format
 from util.logging import get_logger
 from util.enum import Enum
 
-
 logger = get_logger(__name__)
 
 
 class Switch(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -26,6 +26,7 @@ class Switch(LexicalNode):
 
 class Value(LexicalNode):
     RE_NUMBER = re.compile(r'\d+(\.\d+)?')
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -46,6 +47,7 @@ class Value(LexicalNode):
 
 
 class Option(Format):
+
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
         Bump = 'bump'
@@ -61,7 +63,7 @@ class Option(Format):
         ForceMip = 'forcemip'
         Format = 'format'
         HiResShadow = 'hiresshadow'
-        Keep= 'keep'
+        Keep = 'keep'
         KeepMaterial = 'keepmaterial'
         Maps = 'maps'
         MipDistance = 'mipdistance'
@@ -85,34 +87,34 @@ class Option(Format):
         _0x80808080 = '0x80808080'
 
     SwitchValue = {
-        Switch.AdditiveEmissive : [],
-        Switch.Bump : [],
-        Switch.BumpMap : [],
-        Switch.BumpScale : re.compile(r'\d+.\d+'),
-        Switch.BorderColor : ['0'],
-        Switch.Compress : [],
-        Switch.Cubemap : [],
-        Switch.Depth : re.compile(r'\d+'),
-        Switch.DetailBias : ['7'], # TODO
-        Switch.DoNotMergeCollision : [],
-        Switch.ForceFormat : [Value.A8R8G8B8, Value.V8U8],
-        Switch.ForceMip : [Value._0x80808080],
-        Switch.Format : [Value.A4R4G4B4, Value.A8R8G8B8, Value.R5G6B5],
-        Switch.HiResShadow : [],
-        Switch.Keep : [],
-        Switch.KeepMaterial : [],
-        Switch.Maps : ['1'], # TODO
-        Switch.MipDistance : ['1'], # TODO
-        Switch.NoCollision : [],
-        Switch.NoGameModel : [],
-        Switch.RightHanded : [],
-        Switch.SoftSkin : [],
-        Switch.SoftSkinShadow : [],
-        Switch.VertexLighting : [],
-        Switch.Volume : [],
-        Switch._4Bit : [],
-        Switch._8Bit : [],
-        Switch._32Bit : [],
+        Switch.AdditiveEmissive: [],
+        Switch.Bump: [],
+        Switch.BumpMap: [],
+        Switch.BumpScale: re.compile(r'\d+.\d+'),
+        Switch.BorderColor: ['0'],
+        Switch.Compress: [],
+        Switch.Cubemap: [],
+        Switch.Depth: re.compile(r'\d+'),
+        Switch.DetailBias: ['7'],  # TODO
+        Switch.DoNotMergeCollision: [],
+        Switch.ForceFormat: [Value.A8R8G8B8, Value.V8U8],
+        Switch.ForceMip: [Value._0x80808080],
+        Switch.Format: [Value.A4R4G4B4, Value.A8R8G8B8, Value.R5G6B5],
+        Switch.HiResShadow: [],
+        Switch.Keep: [],
+        Switch.KeepMaterial: [],
+        Switch.Maps: ['1'],  # TODO
+        Switch.MipDistance: ['1'],  # TODO
+        Switch.NoCollision: [],
+        Switch.NoGameModel: [],
+        Switch.RightHanded: [],
+        Switch.SoftSkin: [],
+        Switch.SoftSkinShadow: [],
+        Switch.VertexLighting: [],
+        Switch.Volume: [],
+        Switch._4Bit: [],
+        Switch._8Bit: [],
+        Switch._32Bit: [],
     }
 
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token], logger=logger):
@@ -124,14 +126,14 @@ class Option(Format):
                 self.discard()  # Discard whitespaces
 
             elif self.get().type == TK.Minus:
-                self.discard() # '-'
+                self.discard()  # '-'
 
                 self.consume_until_any(TK.Whitespaces)
 
                 switch = Switch(self.collect_tokens())
                 self.enter_scope(switch)
 
-                self.discard() # Discard whitespaces
+                self.discard()  # Discard whitespaces
 
                 while self and self.get().type != TK.Minus:
                     self.consume_until_any(TK.Whitespaces)
@@ -142,7 +144,7 @@ class Option(Format):
                         value = Value(tokens, self.scope)
                         self.add_to_scope(value)
 
-                    self.discard() # Discard whitespaces
+                    self.discard()  # Discard whitespaces
 
                 self.exit_scope()
 
