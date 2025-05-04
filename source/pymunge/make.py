@@ -33,6 +33,7 @@ logger = get_logger('make', color_mode=True)
 
 
 def run(args, cwd: Path = Path(getcwd())):
+    # yapf: disable
     proc = Popen(
         args,
         cwd=str(cwd),
@@ -41,6 +42,7 @@ def run(args, cwd: Path = Path(getcwd())):
         text=True,
         bufsize=1
     )
+    # yapf: enable
 
     logger.info(f'Run {Ansi.bold(" ".join(args))}')
 

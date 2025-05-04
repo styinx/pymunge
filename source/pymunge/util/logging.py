@@ -4,6 +4,7 @@ from util.enum import Enum
 
 
 class Ansi:
+    # yapf: disable
     Styles = [
         Bold,
         Italic,
@@ -42,6 +43,7 @@ class Ansi:
         GrayBackground,
         DefaultBackground
     ] = [40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+    # yapf: enable
 
     Escape = '\x1b[{}m'
 
@@ -132,12 +134,14 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, color
     logger = logging.getLogger(name)
 
     # Stream handler
+    # yapf: disable
     stream_format = str(
         '[%(levelname)-8s]'
         '[%(name)-8s]'
         '[%(filename)s:%(lineno)-d] '
         '%(message)s'
     )
+    # yapf: enable
 
     stream_handler = logging.StreamHandler()
 
@@ -150,12 +154,14 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, color
 
     # File handler
     if path.name:
+        # yapf: disable
         file_format = str(
             '%(levelname)-8s | '
             '%(name)-8s | '
             '%(filename)s:%(lineno)-d   '
             '%(message)s'
         )
+        # yapf: enable
 
         file_handler = logging.FileHandler(path / (name + '.log'))
         file_handler.setFormatter(logging.Formatter(file_format))

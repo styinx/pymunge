@@ -13,6 +13,7 @@ class Style:
         (curses.COLOR_BLUE, curses.COLOR_BLACK),
     ]
 
+    # yapf: disable
     Colors = [
         WhiteBlack,
         BlackWhite,
@@ -20,6 +21,7 @@ class Style:
         GreenBlack,
         BlueBlack
     ] = range(1, len(ColorPalette) + 1)
+    # yapf: enable
 
     ColorHeader = GreenBlack
     ColorFooter = BlackWhite
@@ -31,9 +33,10 @@ class Style:
         curses.start_color()
         for color in Style.Colors[1:]:
             curses.init_pair(color, *Style.ColorPalette[color - 1])
-    
+
 
 class Container:
+
     def __init__(self, x: int = 0, y: int = 0, w: int = 0, h: int = 0, capacity: int = 0):
         self.x = x
         self.y = y
@@ -43,7 +46,7 @@ class Container:
         self.text = []
 
         self.win = curses.newwin(h, w, y, x)
-    
+
     def __setitem__(self, idx: int, text: str):
         while idx >= self.capacity:
             self.text.append('')
@@ -51,14 +54,14 @@ class Container:
 
         self.text[idx] = text
         self.win.addstr(idx, 0, text)
-    
+
     def update(self, h: int, w: int):
         self.w = w
         self.h = h
-    
+
     def render(self):
         self.win.refresh()
-    
+
 
 @contextmanager
 def apply(window, *args):
@@ -86,7 +89,7 @@ def main():
     h, w = screen.getmaxyx()
     w2 = w // 2
     header = Container(0, 0, w, 1)
-    footer = Container(0, h-1, w, 1)
+    footer = Container(0, h - 1, w, 1)
     help = Container(w2, 1, w2, h - 2)
 
     screen.clear()
