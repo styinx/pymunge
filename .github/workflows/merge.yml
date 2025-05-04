@@ -44,6 +44,7 @@ jobs:
           git commit -m "Increase minor version" || echo "No changes"
 
       - name: Push tag
+        continue-on-error: true
         run: |
           python ${{ env.DIR_SOURCE }}/make.py git --tag
 
