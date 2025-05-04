@@ -96,22 +96,21 @@ if __name__ == '__main__':
             elif args.increment == 'minor':
                 MINOR += 1
 
-        if args.sync_version:
-            PATCH += git.commits(HASH, git.hash())
-            BRANCH = git.branch()
-            HASH = git.hash(short=True)
-            DATE = datetime.now().strftime('%Y-%m-%d-%H-%M%z')
+        PATCH += git.commits(HASH, git.hash())
+        BRANCH = git.branch()
+        HASH = git.hash(short=True)
+        DATE = datetime.now().strftime('%Y-%m-%d-%H-%M%z')
 
-            with open(SOURCE_DIR / 'version.py', 'w+') as version_file:
-                version_file.write(VERSION_TEMPLATE.format(
-                    MAJOR=MAJOR,
-                    MINOR=MINOR,
-                    PATCH=PATCH,
-                    HASH=HASH,
-                    DATE=DATE,
-                    BRANCH=BRANCH,
-                ))
-                print(f'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}')
+        with open(SOURCE_DIR / 'version.py', 'w+') as version_file:
+            version_file.write(VERSION_TEMPLATE.format(
+                MAJOR=MAJOR,
+                MINOR=MINOR,
+                PATCH=PATCH,
+                HASH=HASH,
+                DATE=DATE,
+                BRANCH=BRANCH,
+            ))
+            print(f'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}')
 
     if args.action == 'git':
         if args.add:
