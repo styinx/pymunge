@@ -16,7 +16,7 @@ jobs:
 
     env:
       DIR_DOCS: ${{ github.workspace }}/docs
-      DIR_SOURCE: ${{ github.workspace }}/source/pymunge
+      DIR_SOURCE: ${{ github.workspace }}/source
 
     steps:
       - name: Checkout repo
@@ -36,17 +36,17 @@ jobs:
 
       - name: Increase minor version
         run: |
-          python ${{ env.DIR_SOURCE }}/make.py version --increment minor
+          python ${{ env.DIR_SOURCE }}/pymunge/make.py version --increment minor
 
       - name: Commit changes
         run: |
-          git add ${{ env.DIR_SOURCE }}/version.py
+          git add ${{ env.DIR_SOURCE }}/pymunge/version.py
           git commit -m "Increase minor version" || echo "No changes"
 
       - name: Push tag
         continue-on-error: true
         run: |
-          python ${{ env.DIR_SOURCE }}/make.py git --tag
+          python ${{ env.DIR_SOURCE }}/pymunge/make.py git --tag
 
       - name: Autogen docs
         run: |
