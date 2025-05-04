@@ -15,7 +15,8 @@ jobs:
     if: github.actor != 'github-actions'
 
     env:
-      SOURCE: ${{ github.workspace }}/source/pymunge
+      DIR_DOCS: ${{ github.workspace }}/docs
+      DIR_SOURCE: ${{ github.workspace }}/source/pymunge
 
     steps:
       - name: Checkout repo
@@ -35,13 +36,31 @@ jobs:
 
       - name: Increase minor version
         run: |
-          python ${{ env.SOURCE }}/make.py version --increment minor
+          python ${{ env.DIR_SOURCE }}/make.py version --increment minor
 
       - name: Commit changes
         run: |
-          git add ${{ env.SOURCE }}/version.py
+          git add ${{ env.DIR_SOURCE }}/version.py
           git commit -m "Increase minor version" || echo "No changes"
 
       - name: Push tag
         run: |
-          python ${{ env.SOURCE }}/make.py git --tag
+          python ${{ env.DIR_SOURCE }}/make.py git --tag
+
+      - name: Autogen docs
+        run: |
+          sphinx-apidoc -o ${{ env.DIR_DOCS }}/source ${{ env.DIR_SOURCE }}/pymunge
+
+      - name: Build docs
+        run: |
+          sphinx-build -b html -E ${{ env.DIR_DOCS }}/source ${{ env.DIR_DOCS }}/build
+
+      - name: Upload docs
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages
+          path: ${{ env.DIR_DOCS }}/build
+          retention-days: 7
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
