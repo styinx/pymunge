@@ -37,7 +37,7 @@ class Ansi:
         YellowBackground,
         BlueBackground,
         MagentaBackground,
-        CyabBackground,
+        CyanBackground,
         WhiteBackground,
         GrayBackground,
         DefaultBackground
@@ -50,12 +50,12 @@ class Ansi:
         return Ansi.Escape.format(set_style) + string + Ansi.Escape.format(reset_style)
 
     @staticmethod
-    def color_fg(color: int, string: str):
-        return Ansi.style(color, Ansi.DefaultForeground, string)
+    def color_fg(color: int, string: str, reset_color: int = DefaultForeground):
+        return Ansi.style(color, reset_color, string)
 
     @staticmethod
-    def color_bg(color: int, string: str):
-        return Ansi.style(color, Ansi.DefaultBackground, string)
+    def color_bg(color: int, string: str, reset_color: int = DefaultBackground):
+        return Ansi.style(color, reset_color, string)
 
     @staticmethod
     def bold(string: str):
@@ -128,7 +128,7 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def get_logger(name: str, path: Path = Path(), color_mode: bool = False):
+def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, color_mode: bool = False):
     logger = logging.getLogger(name)
 
     # Stream handler
@@ -161,6 +161,6 @@ def get_logger(name: str, path: Path = Path(), color_mode: bool = False):
         file_handler.setFormatter(logging.Formatter(file_format))
         logger.addHandler(file_handler)
 
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level.upper())
 
     return ScopedLogger(logger)
