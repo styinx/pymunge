@@ -109,6 +109,9 @@ if __name__ == '__main__':
     docs_action.add_argument('-a', '--autogen', action='store_true', default=False)
     docs_action.add_argument('-b', '--build', action='store_true', default=False)
 
+    format_action = actions.add_parser('format')
+    format_action.add_argument('-c', '--code', type=Path, default=Path(getcwd()))
+
     git_action = actions.add_parser('git')
     git_action.add_argument('-a', '--add', type=str, nargs='+')
     git_action.add_argument('-c', '--commit', type=str)
@@ -147,6 +150,13 @@ if __name__ == '__main__':
                 ['sphinx-build', '-b', 'html', '-E', 'docs/source', 'docs/build'],
                 cwd=ROOT_DIR,
             )
+
+    if args.action == 'format':
+        location = str(args.code)
+        run(
+            ['yapf', '--style', '.style.yapf', '--in-place', '--recursive', location],
+            cwd=ROOT_DIR,
+        )
 
     if args.action == 'git':
         if args.add:
