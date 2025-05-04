@@ -15,6 +15,7 @@ def fnv1a_32(s: str) -> int:
         h &= 0xFFFFFFFF  # emulate 32-bit overflow
     return h
 
+
 KEYS = {
     # ODF Section
     'ExplosionClass': 0xca0c1378,
@@ -1047,12 +1048,9 @@ KEYS = {
     'ZoomMax': 0x2a96e8b4,
     'ZoomMin': 0x1881b1a6,
     'ZoomRate': 0x9573fb20,
-
 }
 
-NAMES = [
-]
-
+NAMES = []
 
 for k in NAMES:
     print(f"'{k}': 0x{fnv1a_32(k):08x},")

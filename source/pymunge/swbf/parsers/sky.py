@@ -8,11 +8,11 @@ from swbf.parsers.format import Format
 from util.enum import Enum
 from util.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
 class Comment(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -20,6 +20,7 @@ class Comment(LexicalNode):
 
 
 class Block(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -30,6 +31,7 @@ class Block(LexicalNode):
 
 
 class Function(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -43,6 +45,7 @@ class Function(LexicalNode):
 
 
 class Sky(Format):
+
     class Header(Enum):
         FlatInfo = 'FlatInfo'
         DomeInfo = 'DomeInfo'

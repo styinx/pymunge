@@ -7,11 +7,8 @@ from app.munger import Munger
 from util.logging import LogLevel, get_logger
 from version import STRING as VERSION_STRING
 
-
 BASE_DIR = Path(__file__).parent
-CONFIG = Namespace(kwargs={
-    ''
-})
+CONFIG = Namespace(kwargs={''})
 
 
 def MungePath(arg: str) -> Path:

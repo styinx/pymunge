@@ -28,4 +28,3 @@ def measure(f: callable, *args, **kwargs):
     start = timer()
     res = f(*args, **kwargs)
     return timer() - start, res
-

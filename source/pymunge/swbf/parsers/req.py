@@ -9,11 +9,11 @@ from swbf.parsers.format import Format
 from util.enum import Enum
 from util.logging import get_logger
 
-
 logger = get_logger(__name__)
 
 
 class Comment(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -21,6 +21,7 @@ class Comment(LexicalNode):
 
 
 class Condition(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -31,6 +32,7 @@ class Condition(LexicalNode):
 
 
 class Block(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -42,6 +44,7 @@ class Block(LexicalNode):
 
 
 class Type(LexicalNode):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
@@ -67,6 +70,7 @@ class Property(LexicalNode):
 
 
 class Value(LexicalNode, Dependency):
+
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
         Dependency.__init__(self, filepath=None)
@@ -88,6 +92,7 @@ class Value(LexicalNode, Dependency):
 
 
 class Req(Format):
+
     class Header(Enum):
         Reqn = 'REQN'
         Ucft = 'ucft'
@@ -118,7 +123,7 @@ class Req(Format):
         Zafbin = 'zafbin'
 
     TypeFileMapping = {
-        Type.Bnk: 'asfx', # TODO sfx
+        Type.Bnk: 'asfx',  # TODO sfx
         Type.Class: 'odf',
         Type.Config: 'snd',
         Type.Lvl: 'req',
@@ -204,7 +209,7 @@ class Req(Format):
                     self.consume_while_any(TK.Whitespaces)
 
                 if isinstance(self.scope, Condition):
-                    self.collect_tokens() # Discard end of condition
+                    self.collect_tokens()  # Discard end of condition
                     self.exit_scope()
                 else:
                     condition = Condition(self.collect_tokens())

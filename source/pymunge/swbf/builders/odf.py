@@ -6,6 +6,7 @@ from swbf.parsers.odf import Odf, Section, Key, Reference, Value
 
 
 class Class(Chunk):
+
     def __init__(self, tree: Odf):
         Chunk.__init__(self, Magic.Entc)
 
@@ -26,7 +27,7 @@ class Class(Chunk):
                         base_property = StringProperty('BASE', class_label.value.replace('"', ''))
                         self.add(base_property)
 
-                        name_property = StringProperty('TYPE', self.tree.filepath.stem) # odf name
+                        name_property = StringProperty('TYPE', self.tree.filepath.stem)  # odf name
                         self.add(name_property)
 
                     else:
@@ -34,10 +35,16 @@ class Class(Chunk):
 
                         val = next(it)
                         if isinstance(val, Reference):
-                            prop = BinaryProperty('PROP', int32_data(fnv1a_32(node.name)) + val.filepath.stem.replace('"', '').encode('utf-8'))
+                            prop = BinaryProperty(
+                                'PROP',
+                                int32_data(fnv1a_32(node.name)) + val.filepath.stem.replace('"', '').encode('utf-8')
+                            )
                             self.add(prop)
                         elif isinstance(val, Value):
-                            prop = BinaryProperty('PROP', int32_data(fnv1a_32(node.name)) + val.value.replace('"', '').encode('utf-8'))
+                            prop = BinaryProperty(
+                                'PROP',
+                                int32_data(fnv1a_32(node.name)) + val.value.replace('"', '').encode('utf-8')
+                            )
                             self.add(prop)
                         else:
                             raise Exception('TODO')
@@ -46,4 +53,3 @@ class Class(Chunk):
             pass
 
         return self
-
