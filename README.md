@@ -8,6 +8,8 @@ Munge tool for Star Wars Battlefront 2004.
 python -m pip install swbf-pymunge
 ```
 
+PyPi Mirror: [https://pypi.org/project/swbf-pymunge/](https://pypi.org/project/swbf-pymunge/)
+
 ## Usage
 
 | Short Flag | Long Flag | Arguments | Description |

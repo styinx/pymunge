@@ -24,6 +24,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
+         fetch-depth: 500
          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup
