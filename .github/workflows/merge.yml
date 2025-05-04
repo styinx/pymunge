@@ -45,6 +45,7 @@ jobs:
         run: |
           git add ${{ env.DIR_SOURCE }}/pymunge/version.py
           git commit -m "Increase minor version" || echo "No changes"
+          git push
 
       - name: Push tag
         continue-on-error: true
