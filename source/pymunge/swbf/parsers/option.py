@@ -6,7 +6,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.registry import FileRegistry
-from swbf.parsers.format import Format
+from swbf.parsers.format import TextFormat
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -46,7 +46,7 @@ class Value(LexicalNode):
                     logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
 
 
-class Option(Format):
+class Option(TextFormat):
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
@@ -118,7 +118,7 @@ class Option(Format):
     }
 
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token], logger=logger):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -162,7 +162,7 @@ if __name__ == '__main__':
         path = Path(sys.argv[1])
         if path.is_file():
             opt = Option.read(filepath=path)
-            opt.print()
+            print(opt.dump())
         else:
             for file in path.rglob('*.option'):
                 opt = Option.read(filepath=file)

@@ -5,7 +5,7 @@ from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
 from app.registry import Dependency, FileRegistry
-from swbf.parsers.format import Format
+from swbf.parsers.format import TextFormat
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -91,7 +91,7 @@ class Value(LexicalNode, Dependency):
             self.filepath = (Path(root(self).filepath.parent) / f'{self.name}.{ending}').resolve()
 
 
-class Req(Format):
+class Req(TextFormat):
 
     class Header(Enum):
         Reqn = 'REQN'
@@ -132,7 +132,7 @@ class Req(Format):
     }
 
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:

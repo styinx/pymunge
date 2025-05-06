@@ -20,8 +20,9 @@ def MungePath(arg: str) -> Path:
 
 def main():
     parser = ArgumentParser('pymunge')
+    parser.add_argument('-a', '--ansi-style', action='store_true', default=False)
     parser.add_argument('-b', '--binary-dir', type=MungePath, default=Path(getcwd()))
-    parser.add_argument('-c', '--colormode', action='store_true', default=False)
+    parser.add_argument('-c', '--config', type=Path, default=Path(getcwd()))
     parser.add_argument('-d', '--dry-run', action='store_true', default=False)
     parser.add_argument('-i', '--interactive', action='store_true', default=False)
     parser.add_argument('-l', '--log-level', type=str, default=LogLevel.Info, choices=list(LogLevel))
@@ -45,28 +46,12 @@ def main():
         print(VERSION_STRING)
         return 0
 
-    logger = get_logger('pymunge', path=Path(getcwd()), level=args.log_level, color_mode=args.colormode)
-
-    logger.debug(f'debug')
-    logger.info(f'info')
-    logger.warning(f'warning')
-    logger.error(f'error')
-    logger.critical(f'critical')
+    logger = get_logger('pymunge', path=Path(getcwd()), level=args.log_level, ansi_style=args.ansi_style)
 
     logger.info(f'Munger config:')
     with logger:
-        logger.info(f'Log level:        "{args.log_level}"')
-        logger.info(f'Color mode:       "{args.colormode}"')
-        logger.info(f'Interactive:      "{args.interactive}"')
-        logger.info(f'No GUI:           "{args.no_gui}"')
-        logger.info(f'Dry run:          "{args.dry_run}"')
-        logger.info(f'Munge platform:   "{args.platform}"')
-        logger.info(f'Munge mode:       "{args.munge_mode}"')
-        logger.info(f'Binary directory: "{args.binary_dir}"')
-        logger.info(f'Source:           "{args.source}"')
-        logger.info(f'Target:           "{args.target}"')
-        if args.tool:
-            logger.info(f'Munge tool:       "{args.tool}"')
+        for key, arg in args.__dict__.items():
+            logger.info(f'{key:20s} {arg}')
 
     munger = Munger(args, logger)
     #munger.run()

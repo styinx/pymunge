@@ -4,7 +4,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.registry import FileRegistry
-from swbf.parsers.format import Format
+from swbf.parsers.format import TextFormat
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -44,7 +44,7 @@ class Function(LexicalNode):
             logger.warning(f'Function name "{self.name}" is not known.')
 
 
-class Sky(Format):
+class Sky(TextFormat):
 
     class Header(Enum):
         FlatInfo = 'FlatInfo'
@@ -98,7 +98,7 @@ class Sky(Format):
         VehicleAmbientColor = 'VehicleAmbientColor'
 
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:

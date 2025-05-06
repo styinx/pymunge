@@ -3,6 +3,20 @@
 Munge tool for Star Wars Battlefront 2004.
 
 
+## Documentation
+
+[pymunge docs](https://styinx.github.io/pymunge/)
+
+
+### Build local Documentation from sources
+
+```
+python source/pymunge/make.py docs --autogen --build
+```
+
+Find the offline documentation at `docs/build/index.html`.
+
+
 ## Install
 
 ```
@@ -14,15 +28,18 @@ PyPi Mirror: [https://pypi.org/project/swbf-pymunge/](https://pypi.org/project/s
 
 ## Usage
 
+
 ### Build a folder with mod files (at least one .req file required)
 ```
 pymunge -s ./your_files
 ```
 
+
 ### Build a single ODF file
 ```
 pymunge -s your_file.odf odfmunge
 ```
+
 
 ### Build a folder of ODF files
 ```
@@ -47,15 +64,4 @@ See also `-h` for an up-to-date listing of all arguments.
 | :--- | :--- | :--- | :--- |
 | `-l` | `--log-level` | `debug , info , warning, error , critical` | Adjusts logger output accordingly. |
 
-
-## Documentation
-
-[pymunge docs](https://styinx.github.io/pymunge/)
-
-
-### Build local Documentation from sources
-
-```
-python .\source\pymunge\make.py docs --autogen --build
-```
 

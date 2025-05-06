@@ -26,7 +26,7 @@ VERSION_TEMPLATE = str(
     'STRING: str = \'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}\'\n'
 )
 
-logger = get_logger('make', color_mode=True)
+logger = get_logger('make', ansi_style=True)
 
 
 def run(args, cwd: Path = Path(getcwd())):

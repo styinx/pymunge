@@ -131,7 +131,7 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, color_mode: bool = False):
+def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_style: bool = False):
     logger = logging.getLogger(name)
 
     # Stream handler
@@ -146,7 +146,7 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, color
 
     stream_handler = logging.StreamHandler()
 
-    if color_mode:
+    if ansi_style:
         stream_handler.setFormatter(ColorFormatter(stream_format))
     else:
         stream_handler.setFormatter(logging.Formatter(stream_format))

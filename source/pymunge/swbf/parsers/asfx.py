@@ -6,7 +6,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.registry import FileRegistry, Dependency
-from swbf.parsers.format import Format
+from swbf.parsers.format import TextFormat
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -85,7 +85,7 @@ class Value(LexicalNode):
         #    logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
-class Asfx(Format):
+class Asfx(TextFormat):
 
     class Switch(Enum):
         Resample = 'resample'
@@ -110,7 +110,7 @@ class Asfx(Format):
     }
 
     def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        Format.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         path = Path(sys.argv[1])
         if path.is_file():
             asfx = Asfx.read(filepath=path)
-            asfx.print()
+            print(asfx.dump())
         else:
             for file in path.rglob('*.asfx'):
                 try:
