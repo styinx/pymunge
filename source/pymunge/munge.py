@@ -36,6 +36,8 @@ def main():
 
     subparsers = parser.add_subparsers(dest='tool')
 
+    modelmunge = subparsers.add_parser(Munger.Tool.ModelMunge)
+
     odfmunge = subparsers.add_parser(Munger.Tool.OdfMunge)
 
     scriptmunge = subparsers.add_parser(Munger.Tool.ScriptMunge)

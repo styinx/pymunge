@@ -5,6 +5,7 @@ from pathlib import Path
 from app.registry import FileRegistry
 from app.ui import gui
 from swbf.parsers.odf import Odf
+from swbf.parsers.msh import Msh
 from swbf.parsers.req import Req
 from swbf.builders.odf import Class
 from swbf.builders.ucfb import Ucfb
@@ -55,7 +56,7 @@ class Munger:
 
         if args.tool:
             if args.tool == Munger.Tool.ModelMunge:
-                pass
+                self.filter = 'msh'
             elif args.tool == Munger.Tool.OdfMunge:
                 self.filter = 'odf'
             elif args.tool == Munger.Tool.ScriptMunge:
@@ -79,8 +80,16 @@ class Munger:
         #self.ui.join()
 
     def munge(self):
-        parsers = {'req': Req, 'odf': Odf}
-        builders = {'req': Ucfb, 'odf': Class}
+        parsers = {
+            'req': Req,
+            'msh': Msh,
+            'odf': Odf
+        }
+        builders = {
+            'req': Ucfb,
+            'odf': Class,
+        }
+
         parser_type = parsers.get(self.filter, Req)
         builder_type = builders.get(self.filter, Ucfb)
 
