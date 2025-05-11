@@ -230,6 +230,17 @@ class Attributes(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
+class BendConstraints(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_constraints: int = msh_stream.int32()
+        self.constraints: list[list[int]]= [msh_stream.int16_array(2) for _ in range(self.num_constraints)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
 class BoundingBox(Chunk, BinaryNode):
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
@@ -239,6 +250,71 @@ class BoundingBox(Chunk, BinaryNode):
         self.center: list[float] = msh_stream.float32_array(3)
         self.extension: list[float] = msh_stream.float32_array(3)
         self.radius: float = msh_stream.float32()
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class ClothMesh(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        # TODO: is it 3 or 4 elements?
+        self.num_points: int = msh_stream.int32()
+        self.constraints: list[list[float]]= [msh_stream.float32_array(3) for _ in range(self.num_points)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class ClothTextureName(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.name: str = msh_stream.string(self.chunk_length)
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class ClothUvCoordinates(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_coordinates: int = msh_stream.int32()
+        self.coordinates: list[list[float]]= [msh_stream.float32_array(2) for _ in range(self.num_coordinates)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class ClothVertecies(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_vertecies: int = msh_stream.int32()
+        self.constraints: list[list[float]]= [msh_stream.float32_array(3) for _ in range(self.num_vertecies)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class Collision(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        #TODO: name lengths, 64 for now
+
+        self.num_collisions: int = msh_stream.int32()
+        self.collision_name: str = msh_stream.string(64)
+        self.parent_name: str = msh_stream.string(64)
+        self.primitive_type: int = msh_stream.int32()
+        self.data0: float = msh_stream.float32()
+        self.data1: float = msh_stream.float32()
+        self.data2: float = msh_stream.float32()
+
+        # Padding
+        msh_stream.advance(msh_stream.pos % 4)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -260,6 +336,17 @@ class ColorVertecies(Chunk, BinaryNode):
 
         self.num_colors: int = msh_stream.int32()
         self.colors: list[bytes] = [msh_stream.bytes(4) for _ in range(self.num_colors)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class CrossConstraints(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_coordinates: int = msh_stream.int32()
+        self.coordinates: list[list[float]]= [msh_stream.float32_array(3) for _ in range(self.num_coordinates)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -295,6 +382,30 @@ class Envelope(Chunk, BinaryNode):
 
         self.num_indices : int = msh_stream.int32()
         self.indices : list[int] = msh_stream.int32_array(self.num_indices)
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class FixPoints(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_points : int = msh_stream.int32()
+        self.indices : list[int] = msh_stream.int32_array(self.num_indices)
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class FixPointWeights(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        # TODO: string size
+
+        self.num_points : int = msh_stream.int32()
+        self.weights : list[str] = [msh_stream.string(64) for _ in range(self.num_points)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -426,6 +537,17 @@ class ShadowMesh(Chunk, BinaryNode):
         self.vertices: list[list[float]] = [msh_stream.float32_array(3) for _ in range(self.num_vertices)]
         self.num_edges: int = msh_stream.int32()
         self.edges: list[list[int]] = [msh_stream.int16_array(4) for _ in range(self.num_vertices)]
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class StretchConstraints(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.num_constraints: int = msh_stream.int32()
+        self.constraints: list[list[int]] = [msh_stream.int16_array(2) for _ in range(self.num_constraints)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -695,23 +817,23 @@ class Msh(BinaryFormat):
             Msh.Chunk.SHDW: (None, ShadowMesh),
             Msh.Chunk.STRP: (self.parse_strp, Strip),
             Msh.Chunk.UV0L: (None, UvCoordinates),
-            Msh.Chunk.WGHT: (None, WeightBones),
+            Msh.Chunk.WGHT: (None, WeightBones)
         }):
             pass
 
     def parse_clth(self):
         while self._parse_chunk({
             # TODO
-            Msh.Chunk.BPRS: (None, BinaryNode),
-            Msh.Chunk.CMSH: (None, BinaryNode),
-            Msh.Chunk.CPOS: (None, BinaryNode),
-            Msh.Chunk.CPRS: (None, BinaryNode),
-            Msh.Chunk.CTEX: (None, BinaryNode),
-            Msh.Chunk.CUV0: (None, BinaryNode),
-            Msh.Chunk.COLL: (None, BinaryNode),
-            Msh.Chunk.FIDX: (None, BinaryNode),
-            Msh.Chunk.FWGT: (None, BinaryNode),
-            Msh.Chunk.SPRS: (None, BinaryNode),
+            Msh.Chunk.BPRS: (None, BendConstraints),
+            Msh.Chunk.CMSH: (None, ClothMesh),
+            Msh.Chunk.COLL: (None, Collision),
+            Msh.Chunk.CPOS: (None, ClothVertecies),
+            Msh.Chunk.CPRS: (None, CrossConstraints),
+            Msh.Chunk.CTEX: (None, ClothTextureName),
+            Msh.Chunk.CUV0: (None, ClothUvCoordinates),
+            Msh.Chunk.FIDX: (None, FixPoints),
+            Msh.Chunk.FWGT: (None, FixPointWeights),
+            Msh.Chunk.SPRS: (None, StretchConstraints)
         }):
             pass
 
