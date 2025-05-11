@@ -1,8 +1,8 @@
 MAJOR: int = 0
-MINOR: int = 5
-PATCH: int = 49
-HASH: str = '16491dd'
-DATE: str = '2025-05-11-11-00'
+MINOR: int = 6
+PATCH: int = 51
+HASH: str = 'c105158'
+DATE: str = '2025-05-11-16-39'
 BRANCH: str = 'master'
-NUMBER: tuple[int, int, int] = (0, 5, 49)
-STRING: str = '00.05.000049_16491dd_master_2025-05-11-11-00'
+NUMBER: tuple[int, int, int] = (0, 6, 51)
+STRING: str = '00.06.000051_c105158_master_2025-05-11-16-39'
