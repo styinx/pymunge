@@ -4,8 +4,10 @@ import re
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.registry import FileRegistry, Dependency
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from app.diagnostic import Diagnostic
+from app.registry import Dependency
+from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -22,12 +24,14 @@ class Comment(LexicalNode):
 
 class Key(LexicalNode):
 
-    def __init__(self, tokens: list[Token], parent: Node = None):
+    def __init__(self, diagnostic: Diagnostic, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
-        if self.name not in Odf.Key:
+        if self.name not in OdfParser.Key:
+            diagnostic.report(SwbfTextParser.UnrecognizedToken(self.name, 'haba'))
+            diagnostic.report(SwbfTextParser.UnrecognizedToken(self.name, 'baba'))
             logger.warning(f'Key name "{self.name}" is not known.')
 
 
@@ -56,11 +60,11 @@ class Section(LexicalNode):
 
         self.name: str = self.raw().strip()
 
-        if self.name not in Odf.Section:
+        if self.name not in OdfParser.Section:
             logger.warning(f'Section name "{self.name}" is not known.')
 
 
-class Odf(TextFormat):
+class OdfParser(SwbfTextParser):
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -1103,8 +1107,8 @@ class Odf(TextFormat):
         ZoomMin = 'ZoomMin'
         ZoomRate = 'ZoomRate'
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
+        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
 
         self.curr = self
 
@@ -1142,7 +1146,7 @@ class Odf(TextFormat):
                 while self.consume(TK.Word):
                     pass
 
-                key = Key(self.collect_tokens())
+                key = Key(self.environment.diagnostic, self.collect_tokens())
                 self.curr.add(key)
 
                 while self.consume_any([TK.EqualSign] + TK.Whitespaces):
@@ -1174,4 +1178,4 @@ class Odf(TextFormat):
 
 
 if __name__ == '__main__':
-    Odf.cmd_helper()
+    OdfParser.cmd_helper()

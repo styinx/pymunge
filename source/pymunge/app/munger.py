@@ -1,24 +1,20 @@
 from argparse import Namespace
+from logging import Logger
 from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
-from app.registry import FileRegistry
+from app.environment import MungeEnvironment
 from app.ui import gui
-from swbf.parsers.odf import Odf
-from swbf.parsers.msh import Msh
-from swbf.parsers.req import Req
+from swbf.parsers.odf import OdfParser
+from swbf.parsers.msh import MshParser
+from swbf.parsers.req import ReqParser
 from swbf.builders.odf import Class
 from swbf.builders.ucfb import Ucfb
 from util.enum import Enum
 from util.logging import get_logger
 
+
 logger = get_logger(__name__)
-
-
-class Diagnostic:
-
-    def __init__(self):
-        pass
 
 
 class Munger:
@@ -45,12 +41,11 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger=logger):
-        self.logger = logger
+    def __init__(self, args: Namespace, logger: Logger=logger):
+        self.logger: Logger = logger
         self.source: Path = args.source
         self.filter: str = 'req'
-        self.registry: FileRegistry = FileRegistry()
-        self.diagnostic: Diagnostic = Diagnostic()
+        self.environment: MungeEnvironment = MungeEnvironment(logger=logger)
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
@@ -81,20 +76,20 @@ class Munger:
 
     def munge(self):
         parsers = {
-            'req': Req,
-            'msh': Msh,
-            'odf': Odf
+            'req': ReqParser,
+            'msh': MshParser,
+            'odf': OdfParser
         }
         builders = {
             'req': Ucfb,
             'odf': Class,
         }
 
-        parser_type = parsers.get(self.filter, Req)
+        parser_type = parsers.get(self.filter, ReqParser)
         builder_type = builders.get(self.filter, Ucfb)
 
         if self.source.is_file():
-            parser = parser_type(registry=self.registry, filepath=self.source, logger=self.logger)
+            parser = parser_type(environment=self.environment, filepath=self.source, logger=self.logger)
             tree = parser.parse()
             builder = builder_type(tree)
             builder.build()
@@ -111,3 +106,6 @@ class Munger:
                 builder = builder_type(tree)
                 builder.build()
                 print(builder.dump())
+        
+        for m in self.environment.diagnostic.messages:
+            print(m.__dict__)

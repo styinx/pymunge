@@ -8,20 +8,22 @@ from parxel.nodes import Document
 from parxel.parser import BinaryParser, TextParser
 from parxel.token import Token
 
-from app.registry import FileRegistry, Dependency
+from app.environment import MungeEnvironment
+from app.diagnostic import ErrorMessage
+from app.registry import Dependency
 from util.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class Format:
-    def __init__(self, registry: FileRegistry, logger: Logger = logger) -> None:
-        self.registry = registry
+class SwbfParser:
+    def __init__(self, environment: MungeEnvironment, logger: Logger = logger) -> None:
+        self.environment = environment
         self.logger = logger
 
     def register_dependency(self, dependency: Dependency):
         if dependency.filepath:
-            self.registry.lookup['premunge'][dependency.filepath.name] = dependency
+            self.environment.registry.lookup['premunge'][dependency.filepath.name] = dependency
             self.logger.debug(f'Add dependency: {dependency.filepath}')
 
     @classmethod
@@ -31,20 +33,20 @@ class Format:
 
                 path = Path(sys.argv[1])
                 if path.is_file():
-                    parser = cls(filepath=path, registry=FileRegistry())
+                    parser = cls(environment=MungeEnvironment(), filepath=path)
                     parser.parse()
                     print(parser.dump())
 
                 elif path.is_dir():
                     for file in path.rglob(f'*.{cls.__name__.lower()}'):
                         print(file)
-                        req = cls(filepath=file, registry=FileRegistry())
+                        req = cls(environment=MungeEnvironment(), filepath=file)
                         req.parse()
 
             else:
                 lex = Lexer(sys.stdin)
                 tokens = lex.tokenize()
-                parser = cls(filepath='', tokens=tokens, registry=FileRegistry())
+                parser = cls(environment=MungeEnvironment(), filepath='', tokens=tokens)
                 parser.parse()
                 print(parser.dump())
 
@@ -55,28 +57,27 @@ class Format:
         sys.exit(0)
 
 
-class TextFormat(Document, TextParser, Format):
+class SwbfTextParser(Document, TextParser, SwbfParser):
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger: Logger = logger):
+    class UnrecognizedToken(ErrorMessage):
+        def __init__(self, received: str, expected: str):
+            super().__init__(f'Unexpected token {received}, expected {expected}')
 
-        Format.__init__(self, registry=registry, logger=logger)
+    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger: Logger = logger):
+
+        SwbfParser.__init__(self, environment=environment, logger=logger)
         Document.__init__(self, filepath=filepath)
         TextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         raise NotImplementedError('This is an abstract base class!')
 
-    def register_dependency(self, dependency: Dependency):
-        if dependency.filepath:
-            self.registry.lookup['premunge'][dependency.filepath.name] = dependency
-            logger.debug(f'Add dependency: {dependency.filepath}')
 
+class SwbfBinaryParser(Document, BinaryParser, SwbfParser):
 
-class BinaryFormat(Document, BinaryParser, Format):
+    def __init__(self, environment: MungeEnvironment, filepath: Path, buffer: bytes = None, logger: Logger = logger):
 
-    def __init__(self, registry: FileRegistry, filepath: Path, buffer: bytes = None, logger: Logger = logger):
-
-        Format.__init__(self, registry=registry)
+        SwbfParser.__init__(self, environment=environment)
         Document.__init__(self, filepath=filepath)
         BinaryParser.__init__(self, buffer=buffer, filepath=filepath, logger=logger)
 

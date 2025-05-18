@@ -3,8 +3,8 @@ from pathlib import Path
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.registry import FileRegistry
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -26,7 +26,7 @@ class Block(LexicalNode):
 
         self.header: str = self.raw().replace('(', '').replace(')', '').strip()
 
-        if self.header not in Sky.Header:
+        if self.header not in SkyParser.Header:
             logger.warning(f'Block header "{self.header}" is not known.')
 
 
@@ -40,11 +40,11 @@ class Function(LexicalNode):
         self.name: str = function[0]
         self.arguments: list[str] = function[1:]
 
-        if self.name not in Sky.Function:
+        if self.name not in SkyParser.Function:
             logger.warning(f'Function name "{self.name}" is not known.')
 
 
-class Sky(TextFormat):
+class SkyParser(SwbfTextParser):
 
     class Header(Enum):
         FlatInfo = 'FlatInfo'
@@ -97,8 +97,8 @@ class Sky(TextFormat):
         TopDirectionalAmbientColor = 'TopDirectionalAmbientColor'
         VehicleAmbientColor = 'VehicleAmbientColor'
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
+        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -142,7 +142,7 @@ class Sky(TextFormat):
 
                 # We assume that the self format can't have nested blocks.
 
-                if isinstance(self.scope, Sky):
+                if isinstance(self.scope, SkyParser):
                     self.consume_until(TK.ParanthesisClose)
                     self.next()
 
@@ -166,4 +166,4 @@ class Sky(TextFormat):
 
 
 if __name__ == '__main__':
-    Sky.cmd_helper()
+    SkyParser.cmd_helper()

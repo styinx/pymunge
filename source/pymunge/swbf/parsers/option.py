@@ -5,10 +5,11 @@ import sys
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.registry import FileRegistry
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from swbf.parsers.parser import SwbfTextParser
 from util.logging import get_logger
 from util.enum import Enum
+
 
 logger = get_logger(__name__)
 
@@ -20,7 +21,7 @@ class Switch(LexicalNode):
 
         self.value: str = self.raw().strip()
 
-        if self.value not in Option.Switch:
+        if self.value not in OptionParser.Switch:
             logger.warning(f'Switch "{self.value}" is not known.')
 
 
@@ -32,21 +33,21 @@ class Value(LexicalNode):
 
         self.value: str = self.raw().strip()
 
-        if self.value not in Option.Value and not re.match(Value.RE_NUMBER, self.value):
+        if self.value not in OptionParser.Value and not re.match(Value.RE_NUMBER, self.value):
             logger.warning(f'Value "{self.value}" is not known.')
 
         if isinstance(self.parent, Switch):
-            valid_values = Option.SwitchValue[self.parent.value]
+            valid_values = OptionParser.SwitchValue[self.parent.value]
 
             if isinstance(valid_values, list):
                 if self.value not in valid_values:
                     logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
             else:
-                if not re.match(Option.SwitchValue[self.parent.value], self.value):
+                if not re.match(OptionParser.SwitchValue[self.parent.value], self.value):
                     logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
 
 
-class Option(TextFormat):
+class OptionParser(SwbfTextParser):
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
@@ -117,8 +118,8 @@ class Option(TextFormat):
         Switch._32Bit: [],
     }
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token], logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token], logger=logger):
+        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -161,14 +162,14 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         path = Path(sys.argv[1])
         if path.is_file():
-            opt = Option.read(filepath=path)
+            opt = OptionParser.read(filepath=path)
             print(opt.dump())
         else:
             for file in path.rglob('*.option'):
-                opt = Option.read(filepath=file)
+                opt = OptionParser.read(filepath=file)
 
     elif len(sys.argv) > 2:
-        opt = Option.read(stream=sys.stdin)
+        opt = OptionParser.read(stream=sys.stdin)
     else:
         sys.exit(1)
 

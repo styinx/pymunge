@@ -2,12 +2,12 @@ from swbf.builders.ucfb import int32_data
 from swbf.builders.ucfb import StringProperty, BinaryProperty
 from swbf.builders.ucfb import Magic, Chunk
 from swbf.builders.fnv1a import fnv1a_32
-from swbf.parsers.odf import Odf, Section, Key, Reference, Value
+from swbf.parsers.odf import OdfParser, Section, Key, Reference, Value
 
 
 class Class(Chunk):
 
-    def __init__(self, tree: Odf):
+    def __init__(self, tree: OdfParser):
         Chunk.__init__(self, Magic.Entc)
 
         self.tree = tree
@@ -18,7 +18,7 @@ class Class(Chunk):
             while it:
                 node = next(it)
                 if isinstance(node, Key):
-                    if node.name == Odf.Key.ClassLabel:
+                    if node.name == OdfParser.Key.ClassLabel:
                         class_label = next(it)
 
                         if not isinstance(class_label, Value):
