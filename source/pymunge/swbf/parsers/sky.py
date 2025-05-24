@@ -1,14 +1,18 @@
+from logging import Logger
 from pathlib import Path
 
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
 from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
-logger = get_logger(__name__)
+
+class SkyWarning(WarningMessage):
+    scope = 'SKY'
 
 
 class Comment(LexicalNode):
@@ -27,7 +31,7 @@ class Block(LexicalNode):
         self.header: str = self.raw().replace('(', '').replace(')', '').strip()
 
         if self.header not in SkyParser.Header:
-            logger.warning(f'Block header "{self.header}" is not known.')
+            MungeEnvironment.Diagnostic.report(SkyWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Function(LexicalNode):
@@ -41,10 +45,11 @@ class Function(LexicalNode):
         self.arguments: list[str] = function[1:]
 
         if self.name not in SkyParser.Function:
-            logger.warning(f'Function name "{self.name}" is not known.')
+            MungeEnvironment.Diagnostic.report(SkyWarning(f'Function name "{self.name}" is not known.'))
 
 
 class SkyParser(SwbfTextParser):
+    filetype = 'sky'
 
     class Header(Enum):
         FlatInfo = 'FlatInfo'
@@ -97,8 +102,8 @@ class SkyParser(SwbfTextParser):
         TopDirectionalAmbientColor = 'TopDirectionalAmbientColor'
         VehicleAmbientColor = 'VehicleAmbientColor'
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
-        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -158,7 +163,7 @@ class SkyParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 

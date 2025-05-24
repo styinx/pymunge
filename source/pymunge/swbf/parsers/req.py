@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 import re
 
@@ -5,12 +6,15 @@ from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
-logger = get_logger(__name__)
+
+class ReqWarning(WarningMessage):
+    scope = 'REQ'
 
 
 class Comment(LexicalNode):
@@ -41,7 +45,7 @@ class Block(LexicalNode):
         self.type: str = ''
 
         if self.header not in ReqParser.Header:
-            logger.warning(f'Block header "{self.header}" is not known.')
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Type(LexicalNode):
@@ -52,7 +56,7 @@ class Type(LexicalNode):
         self.type: str = self.raw().strip()
 
         if self.type not in ReqParser.Type:
-            logger.warning(f'Block type "{self.type}" is not known.')
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block type "{self.type}" is not known.'))
 
 
 class Property(LexicalNode):
@@ -67,7 +71,7 @@ class Property(LexicalNode):
         self.value: str = match.group(2)
 
         if self.key not in ReqParser.Property:
-            logger.warning(f'Block property "{self.key}" is not known.')
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block property "{self.key}" is not known.'))
 
 
 class Value(LexicalNode, Dependency):
@@ -93,6 +97,7 @@ class Value(LexicalNode, Dependency):
 
 
 class ReqParser(SwbfTextParser):
+    filetype = 'req'
 
     class Header(Enum):
         Reqn = 'REQN'
@@ -132,8 +137,8 @@ class ReqParser(SwbfTextParser):
         Type.World: 'wld'
     }
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
-        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -218,7 +223,7 @@ class ReqParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 

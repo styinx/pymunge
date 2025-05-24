@@ -9,12 +9,11 @@ from swbf.parsers.odf import OdfParser
 from swbf.parsers.msh import MshParser
 from swbf.parsers.req import ReqParser
 from swbf.builders.odf import Class
-from swbf.builders.ucfb import Ucfb
+from swbf.builders.msh import Model
+from swbf.builders.builder import Ucfb
 from util.enum import Enum
 from util.logging import get_logger
-
-
-logger = get_logger(__name__)
+from util.time import duration, measure
 
 
 class Munger:
@@ -41,11 +40,11 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger: Logger=logger):
+    def __init__(self, args: Namespace, logger: Logger = get_logger(__name__)):
         self.logger: Logger = logger
         self.source: Path = args.source
         self.filter: str = 'req'
-        self.environment: MungeEnvironment = MungeEnvironment(logger=logger)
+        self.environment: MungeEnvironment = MungeEnvironment(logger=self.logger)
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
@@ -83,29 +82,35 @@ class Munger:
         builders = {
             'req': Ucfb,
             'odf': Class,
+            'msh': Model,
         }
 
         parser_type = parsers.get(self.filter, ReqParser)
         builder_type = builders.get(self.filter, Ucfb)
 
         if self.source.is_file():
-            parser = parser_type(environment=self.environment, filepath=self.source, logger=self.logger)
-            tree = parser.parse()
-            builder = builder_type(tree)
-            builder.build()
+            parser = parser_type(filepath=self.source, logger=self.logger)
+            tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
 
-            ucfb = Ucfb()
-            ucfb.add(builder)
-            ucfb.data()
-            print(ucfb.dump())
+            builder = builder_type(tree)
+            self.environment.statistic.record('build', parser.filepath, builder.build)
+
+            print(builder.dump(24))
+
+            #ucfb = Ucfb(tree)
+            #ucfb.add(builder)
+            #ucfb.data()
+            #print(ucfb.dump(24))
 
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
-                parser = parser_type(registry=self.registry, filepath=entry, logger=self.logger)
-                tree = parser.parse()
+                parser = parser_type(filepath=entry, logger=self.logger)
+                tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
+
                 builder = builder_type(tree)
-                builder.build()
-                print(builder.dump())
+                self.environment.statistic.record('build', parser.filepath, builder.build)
+
+                print(builder.dump(24))
         
-        for m in self.environment.diagnostic.messages:
-            print(m.__dict__)
+        self.environment.diagnostic.summary()
+        self.environment.statistic.summary()

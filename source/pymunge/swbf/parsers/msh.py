@@ -10,9 +10,6 @@ from swbf.parsers.parser import SwbfBinaryParser
 from util.logging import get_logger
 
 
-logger = get_logger(__name__)
-
-
 class Chunk:
     def __init__(self, msh_stream: BinaryParser):
         self.chunk_name : str = msh_stream.string(4)
@@ -316,6 +313,19 @@ class Collision(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
+class CollisionPrimitive(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.primitive_type: int = msh_stream.int32()
+        self.data0: float = msh_stream.float32()
+        self.data1: float = msh_stream.float32()
+        self.data2: float = msh_stream.float32()
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
 class ColorVertex(Chunk, BinaryNode):
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
@@ -605,6 +615,7 @@ class WeightBones(Chunk, BinaryNode):
 
 
 class MshParser(SwbfBinaryParser):
+    filetype = 'msh'
 
     class Chunk:
         # Level 0
@@ -672,8 +683,8 @@ class MshParser(SwbfBinaryParser):
         UV0L = 'UV0L'
         WGHT = 'WGHT'
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, buffer: bytes = None, logger : Logger = logger):
-        SwbfBinaryParser.__init__(self, environment=environment, filepath=filepath, buffer=buffer, logger=logger)
+    def __init__(self, filepath: Path, buffer: bytes = None, logger : Logger = get_logger(__name__)):
+        SwbfBinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)
 
     def _parse_chunk(self, children: dict) -> BinaryNode | Node | None:
         child_name = self.string(4)
@@ -767,7 +778,7 @@ class MshParser(SwbfBinaryParser):
             MshParser.Chunk.MNDX: (None, ModelIndex),
             MshParser.Chunk.MTYP: (None, ModelType),
             MshParser.Chunk.PRNT: (None, ParentModel),
-            MshParser.Chunk.SWCI: (None, BinaryNode),
+            MshParser.Chunk.SWCI: (None, CollisionPrimitive),
             MshParser.Chunk.TRAN: (None, TransformModel)
         }):
             pass

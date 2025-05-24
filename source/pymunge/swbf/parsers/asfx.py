@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 import sys
 
@@ -6,12 +7,15 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.logging import get_logger
 from util.enum import Enum
 
-logger = get_logger(__name__)
+
+class AsxWarning(WarningMessage):
+    scope = 'ASX'
 
 
 class Comment(LexicalNode):
@@ -55,7 +59,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Switch:
-            logger.warning(f'Switch "{self.value}" is not known.')
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Switch "{self.name}" is not known.'))
 
 
 class Config(LexicalNode):
@@ -66,10 +70,10 @@ class Config(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Config:
-            logger.warning(f'Config "{self.value}" is not known.')
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Config "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.value]:
-        #    logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
+        #    self.logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
 
 
 class Value(LexicalNode):
@@ -80,13 +84,14 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Value:
-            logger.warning(f'Value "{self.value}" is not known.')
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Value "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.parent.value][self.parent.value]:
-        #    logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
+        #    self.logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
 class AsfxParser(SwbfTextParser):
+    filetype = 'asfx'
 
     class Switch(Enum):
         Resample = 'resample'
@@ -110,8 +115,8 @@ class AsfxParser(SwbfTextParser):
         }
     }
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
-        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -195,7 +200,7 @@ class AsfxParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".')
+                self.self.logger.warning(f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 

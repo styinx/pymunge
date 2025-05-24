@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 import re
 
@@ -5,13 +6,15 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
-from app.diagnostic import Diagnostic
+from app.diagnostic import WarningMessage
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
-logger = get_logger(__name__)
+
+class OdfWarning(WarningMessage):
+    scope = 'ODF'
 
 
 class Comment(LexicalNode):
@@ -24,15 +27,13 @@ class Comment(LexicalNode):
 
 class Key(LexicalNode):
 
-    def __init__(self, diagnostic: Diagnostic, tokens: list[Token], parent: Node = None):
+    def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            diagnostic.report(SwbfTextParser.UnrecognizedToken(self.name, 'haba'))
-            diagnostic.report(SwbfTextParser.UnrecognizedToken(self.name, 'baba'))
-            logger.warning(f'Key name "{self.name}" is not known.')
+            MungeEnvironment.Diagnostic.report(OdfWarning(f'Key name "{self.name}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -61,10 +62,11 @@ class Section(LexicalNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            logger.warning(f'Section name "{self.name}" is not known.')
+            MungeEnvironment.Diagnostic.report(OdfWarning(f'Section name "{self.name}" is not known.'))
 
 
 class OdfParser(SwbfTextParser):
+    filetype = 'odf'
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -1107,8 +1109,8 @@ class OdfParser(SwbfTextParser):
         ZoomMin = 'ZoomMin'
         ZoomRate = 'ZoomRate'
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token] = None, logger=logger):
-        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
         self.curr = self
 
@@ -1146,7 +1148,7 @@ class OdfParser(SwbfTextParser):
                 while self.consume(TK.Word):
                     pass
 
-                key = Key(self.environment.diagnostic, self.collect_tokens())
+                key = Key(self.collect_tokens())
                 self.curr.add(key)
 
                 while self.consume_any([TK.EqualSign] + TK.Whitespaces):
@@ -1170,7 +1172,7 @@ class OdfParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 

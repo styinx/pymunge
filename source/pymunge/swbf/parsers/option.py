@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 import re
 import sys
@@ -6,12 +7,14 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
 from swbf.parsers.parser import SwbfTextParser
 from util.logging import get_logger
 from util.enum import Enum
 
 
-logger = get_logger(__name__)
+class OptWarning(WarningMessage):
+    scope = 'OPT'
 
 
 class Switch(LexicalNode):
@@ -22,7 +25,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Switch:
-            logger.warning(f'Switch "{self.value}" is not known.')
+            MungeEnvironment.Diagnostic.report(OptWarning(f'Switch "{self.value}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -34,20 +37,21 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Value and not re.match(Value.RE_NUMBER, self.value):
-            logger.warning(f'Value "{self.value}" is not known.')
+            MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not known.'))
 
         if isinstance(self.parent, Switch):
             valid_values = OptionParser.SwitchValue[self.parent.value]
 
             if isinstance(valid_values, list):
                 if self.value not in valid_values:
-                    logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
+                    MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.'))
             else:
                 if not re.match(OptionParser.SwitchValue[self.parent.value], self.value):
-                    logger.warning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
+                    MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.'))
 
 
 class OptionParser(SwbfTextParser):
+    filetype = 'option'
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
@@ -118,8 +122,8 @@ class OptionParser(SwbfTextParser):
         Switch._32Bit: [],
     }
 
-    def __init__(self, environment: MungeEnvironment, filepath: Path, tokens: list[Token], logger=logger):
-        SwbfTextParser.__init__(self, environment=environment, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token], logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -151,7 +155,7 @@ class OptionParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
