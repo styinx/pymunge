@@ -1,17 +1,21 @@
-from logging import Logger
-
 from app.diagnostic import Diagnostic
 from app.registry import FileRegistry
 from app.statistic import Statistic
-from util.logging import get_logger
+from util.logging import get_logger, ScopedLogger
 
 
 class MungeEnvironment:
+    """
+    Singleton class which is initialized once in the :class:`Munger`.
+    Provides access to the :class:`Diagnostic`, :class:`Registry`, and
+    :class:`Statistic`.
+    """
+
     Diagnostic = None
     Registry = None
     Statistic = None
 
-    def __init__(self, logger: Logger = get_logger(__name__)):
+    def __init__(self, logger: ScopedLogger = get_logger(__name__)):
         self.diagnostic: Diagnostic = Diagnostic(logger=logger)
         self.registry: FileRegistry = FileRegistry()
         self.statistic: Statistic = Statistic()

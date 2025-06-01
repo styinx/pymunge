@@ -200,7 +200,9 @@ class AsfxParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                self.self.logger.warning(f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".')
+                self.self.logger.warning(
+                    f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".'
+                )
                 self.discard()
                 # self.error(TK.Null)
 

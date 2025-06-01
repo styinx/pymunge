@@ -1,5 +1,4 @@
 from argparse import Namespace
-from logging import Logger
 from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
@@ -12,7 +11,7 @@ from swbf.builders.odf import Class
 from swbf.builders.msh import Model
 from swbf.builders.builder import Ucfb
 from util.enum import Enum
-from util.logging import get_logger
+from util.logging import get_logger, ScopedLogger
 from util.time import duration, measure
 
 
@@ -40,8 +39,8 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger: Logger = get_logger(__name__)):
-        self.logger: Logger = logger
+    def __init__(self, args: Namespace, logger: ScopedLogger = get_logger(__name__)):
+        self.logger: ScopedLogger = logger
         self.source: Path = args.source
         self.filter: str = 'req'
         self.environment: MungeEnvironment = MungeEnvironment(logger=self.logger)
@@ -74,11 +73,7 @@ class Munger:
         #self.ui.join()
 
     def munge(self):
-        parsers = {
-            'req': ReqParser,
-            'msh': MshParser,
-            'odf': OdfParser
-        }
+        parsers = {'req': ReqParser, 'msh': MshParser, 'odf': OdfParser}
         builders = {
             'req': Ucfb,
             'odf': Class,
@@ -111,6 +106,6 @@ class Munger:
                 self.environment.statistic.record('build', parser.filepath, builder.build)
 
                 print(builder.dump(24))
-        
+
         self.environment.diagnostic.summary()
         self.environment.statistic.summary()

@@ -3,6 +3,7 @@ from util.time import measure, duration
 
 
 class Statistic:
+
     class Tag:
         Parse = 'parse'
         Build = 'build'
@@ -15,7 +16,7 @@ class Statistic:
 
         if tag not in self.times:
             self.times[tag] = {}
-        
+
         self.times[tag][name] = time
 
         return result

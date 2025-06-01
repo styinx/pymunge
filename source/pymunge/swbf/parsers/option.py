@@ -44,10 +44,14 @@ class Value(LexicalNode):
 
             if isinstance(valid_values, list):
                 if self.value not in valid_values:
-                    MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.'))
+                    MungeEnvironment.Diagnostic.report(
+                        OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
+                    )
             else:
                 if not re.match(OptionParser.SwitchValue[self.parent.value], self.value):
-                    MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.'))
+                    MungeEnvironment.Diagnostic.report(
+                        OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
+                    )
 
 
 class OptionParser(SwbfTextParser):

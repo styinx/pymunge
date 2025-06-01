@@ -144,7 +144,7 @@ class SwbfUcfbBuilder(UcfbNode):
     def __len__(self) -> int:
         # MAGIC , SIZE , children
         return 4 + 4 + sum(map(len, self.children))
-    
+
     def build(self):
         raise NotImplementedError('This is an abstract base class!')
 

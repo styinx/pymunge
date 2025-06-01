@@ -12,14 +12,14 @@ class Model(SwbfUcfbBuilder):
 
     def build(self):
         try:
-            name_property = StringProperty('INFO', self.tree.filepath.stem, False) # msh name
+            name_property = StringProperty('INFO', self.tree.filepath.stem, False)  # msh name
             self.add(name_property)
 
             it = self.tree.walk()
             while it:
                 node = next(it)
                 if isinstance(node, (Header, Mesh)):
-                    pass # skip
+                    pass  # skip
 
                 elif isinstance(node, SceneInformation):
                     pass

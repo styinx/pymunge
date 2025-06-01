@@ -1,7 +1,6 @@
 import io
 from pathlib import Path
 import sys
-from logging import Logger
 
 from parxel.lexer import Lexer
 from parxel.nodes import Document
@@ -11,7 +10,7 @@ from parxel.token import Token
 from app.environment import MungeEnvironment
 from app.diagnostic import ErrorMessage
 from app.registry import Dependency
-from util.logging import get_logger
+from util.logging import get_logger, ScopedLogger
 
 logger = get_logger(__name__)
 
@@ -19,8 +18,8 @@ logger = get_logger(__name__)
 class SwbfParser:
     filetype = ''
 
-    def __init__(self, logger: Logger = get_logger(__name__)) -> None:
-        self.logger: Logger = logger
+    def __init__(self, logger: ScopedLogger = get_logger(__name__)) -> None:
+        self.logger: ScopedLogger = logger
 
     def register_dependency(self, dependency: Dependency):
         if dependency.filepath:
@@ -64,10 +63,11 @@ class SwbfParser:
 class SwbfTextParser(Document, TextParser, SwbfParser):
 
     class UnrecognizedToken(ErrorMessage):
+
         def __init__(self, received: str, expected: str):
             super().__init__(f'Unexpected token {received}, expected {expected}')
 
-    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+    def __init__(self, filepath: Path, tokens: list[Token] | None = None, logger: ScopedLogger = get_logger(__name__)):
 
         SwbfParser.__init__(self, logger=logger)
         Document.__init__(self, filepath=filepath)
@@ -79,12 +79,13 @@ class SwbfTextParser(Document, TextParser, SwbfParser):
 
 class SwbfBinaryParser(Document, BinaryParser, SwbfParser):
 
-    def __init__(self, filepath: Path, buffer: bytes = None, logger: Logger = get_logger(__name__)):
+    def __init__(self, filepath: Path, buffer: bytes | None = None, logger: ScopedLogger = get_logger(__name__)):
 
-        SwbfParser.__init__(self,)
+        SwbfParser.__init__(
+            self,
+        )
         Document.__init__(self, filepath=filepath)
         BinaryParser.__init__(self, buffer=buffer, filepath=filepath, logger=logger)
 
     def parse_format(self):
         raise NotImplementedError('This is an abstract base class!')
-

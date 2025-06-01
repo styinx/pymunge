@@ -35,7 +35,8 @@ class Class(SwbfUcfbBuilder):
                         if isinstance(val, Reference):
                             prop = BinaryProperty(
                                 'PROP',
-                                int32_data(fnv1a_32(node.name)) + (val.filepath.stem.replace('"', '') + chr(0)).encode('utf-8')
+                                int32_data(fnv1a_32(node.name)) +
+                                (val.filepath.stem.replace('"', '') + chr(0)).encode('utf-8')
                             )
                             self.add(prop)
                         elif isinstance(val, Value):
