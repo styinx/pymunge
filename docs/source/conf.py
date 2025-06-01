@@ -17,17 +17,19 @@ copyright = '2025, styinx'
 author = 'styinx'
 release = f'{MAJOR}.{MINOR}'
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-extensions = ['sphinx.ext.autodoc']
+extensions = [
+    'sphinx.ext.autodoc'
+]
 
 templates_path = ['_templates']
 exclude_patterns = []
+numfig = True
 
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
+# HTML
+html_css_files = ['custom.css']
 html_static_path = ['_static']
 html_theme = 'furo'
 html_theme_options = {}
+html_favicon = '_static/pymunge.ico'
+html_logo= '_static/pymunge.png'
+
