@@ -41,6 +41,8 @@ class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
     """
 
     scope = '   '
+    severity = Severity.Info
+    code = 0
 
     def __init__(self, text: str | None = None):
         self.code = self.__class__.code

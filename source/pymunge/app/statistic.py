@@ -9,7 +9,10 @@ class Statistic:
         Build = 'build'
 
     def __init__(self):
-        self.times = {}
+        self.times = {
+            'parse': {},
+            'build': {}
+        }
 
     def record(self, tag: str, name: str, f: callable, *args, **kwargs):
         time, result = measure(f, *args, **kwargs)

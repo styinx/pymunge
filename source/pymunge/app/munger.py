@@ -12,7 +12,6 @@ from swbf.builders.msh import Model
 from swbf.builders.builder import Ucfb
 from util.enum import Enum
 from util.logging import get_logger, ScopedLogger
-from util.time import duration, measure
 
 
 class Munger:
@@ -41,18 +40,18 @@ class Munger:
 
     def __init__(self, args: Namespace, logger: ScopedLogger = get_logger(__name__)):
         self.logger: ScopedLogger = logger
-        self.source: Path = args.source
+        self.source: Path = args.munge.source
         self.filter: str = 'req'
         self.environment: MungeEnvironment = MungeEnvironment(logger=self.logger)
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
-        if args.tool:
-            if args.tool == Munger.Tool.ModelMunge:
+        if args.munge.tool:
+            if args.munge.tool == Munger.Tool.ModelMunge:
                 self.filter = 'msh'
-            elif args.tool == Munger.Tool.OdfMunge:
+            elif args.munge.tool == Munger.Tool.OdfMunge:
                 self.filter = 'odf'
-            elif args.tool == Munger.Tool.ScriptMunge:
+            elif args.munge.tool == Munger.Tool.ScriptMunge:
                 pass
 
     def setup(self):
