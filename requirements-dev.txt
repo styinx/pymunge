@@ -2,4 +2,5 @@ build~=1.2.2
 furo~=2024.8.6
 setuptools>=61.0
 Sphinx~=8.2.3
+sphinx-argparse~=0.5.2
 yapf~=0.43.0

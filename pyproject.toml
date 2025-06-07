@@ -43,6 +43,9 @@ dependencies    = [
 docs = [
     "furo~=2024.8.6",
     "Sphinx~=8.2.3",
+    "sphinx-argparse~=0.5.2",
+]
+formatting = [
     "yapf~=0.43.0"
 ]
 
