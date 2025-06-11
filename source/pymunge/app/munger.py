@@ -11,7 +11,6 @@ from swbf.builders.odf import Class
 from swbf.builders.msh import Model
 from swbf.builders.builder import Ucfb
 from util.enum import Enum
-from util.logging import get_logger, ScopedLogger
 
 
 class Munger:
@@ -38,11 +37,10 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger: ScopedLogger = get_logger(__name__)):
-        self.logger: ScopedLogger = logger
+    def __init__(self, args: Namespace, environment: MungeEnvironment):
+        self.environment: MungeEnvironment = environment
         self.source: Path = args.munge.source
         self.filter: str = 'req'
-        self.environment: MungeEnvironment = MungeEnvironment(logger=self.logger)
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
@@ -83,7 +81,7 @@ class Munger:
         builder_type = builders.get(self.filter, Ucfb)
 
         if self.source.is_file():
-            parser = parser_type(filepath=self.source, logger=self.logger)
+            parser = parser_type(filepath=self.source, logger=self.environment.logger)
             tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
 
             builder = builder_type(tree)
@@ -98,7 +96,7 @@ class Munger:
 
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
-                parser = parser_type(filepath=entry, logger=self.logger)
+                parser = parser_type(filepath=entry, logger=self.environment.logger)
                 tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
 
                 builder = builder_type(tree)
@@ -106,5 +104,3 @@ class Munger:
 
                 print(builder.dump(24))
 
-        self.environment.diagnostic.summary()
-        self.environment.statistic.summary()
