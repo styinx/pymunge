@@ -1,0 +1,21 @@
+img.themed-figure {
+  display: none;
+}
+
+[data-theme="light"] img.themed-figure.light-img {
+  display: block;
+}
+
+[data-theme="light"] img.themed-figure.dark-img {
+  display: none;
+}
+
+[data-theme="dark"] img.themed-figure.dark-img ,
+[data-theme="auto"] img.themed-figure.dark-img {
+  display: block;
+}
+
+[data-theme="dark"] img.themed-figure.light-img ,
+[data-theme="auto"] img.themed-figure.light-img {
+  display: none;
+}

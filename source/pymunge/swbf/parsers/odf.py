@@ -1,15 +1,20 @@
+from logging import Logger
 from pathlib import Path
 import re
 
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.registry import FileRegistry, Dependency
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
+from app.registry import Dependency
+from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
-logger = get_logger(__name__)
+
+class OdfWarning(WarningMessage):
+    scope = 'ODF'
 
 
 class Comment(LexicalNode):
@@ -27,8 +32,8 @@ class Key(LexicalNode):
 
         self.name: str = self.raw().strip()
 
-        if self.name not in Odf.Key:
-            logger.warning(f'Key name "{self.name}" is not known.')
+        if self.name not in OdfParser.Key:
+            MungeEnvironment.Diagnostic.report(OdfWarning(f'Key name "{self.name}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -56,11 +61,12 @@ class Section(LexicalNode):
 
         self.name: str = self.raw().strip()
 
-        if self.name not in Odf.Section:
-            logger.warning(f'Section name "{self.name}" is not known.')
+        if self.name not in OdfParser.Section:
+            MungeEnvironment.Diagnostic.report(OdfWarning(f'Section name "{self.name}" is not known.'))
 
 
-class Odf(TextFormat):
+class OdfParser(SwbfTextParser):
+    filetype = 'odf'
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -1103,8 +1109,8 @@ class Odf(TextFormat):
         ZoomMin = 'ZoomMin'
         ZoomRate = 'ZoomRate'
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
         self.curr = self
 
@@ -1166,7 +1172,7 @@ class Odf(TextFormat):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
@@ -1174,4 +1180,4 @@ class Odf(TextFormat):
 
 
 if __name__ == '__main__':
-    Odf.cmd_helper()
+    OdfParser.cmd_helper()

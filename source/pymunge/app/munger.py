@@ -2,23 +2,16 @@ from argparse import Namespace
 from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
-from app.registry import FileRegistry
+from app.environment import MungeEnvironment
 from app.ui import gui
-from swbf.parsers.odf import Odf
-from swbf.parsers.msh import Msh
-from swbf.parsers.req import Req
+from swbf.parsers.odf import OdfParser
+from swbf.parsers.msh import MshParser
+from swbf.parsers.req import ReqParser
 from swbf.builders.odf import Class
-from swbf.builders.ucfb import Ucfb
+from swbf.builders.msh import Model
+from swbf.builders.builder import Ucfb
 from util.enum import Enum
-from util.logging import get_logger
-
-logger = get_logger(__name__)
-
-
-class Diagnostic:
-
-    def __init__(self):
-        pass
+from util.logging import get_logger, ScopedLogger
 
 
 class Munger:
@@ -45,21 +38,20 @@ class Munger:
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, logger=logger):
-        self.logger = logger
-        self.source: Path = args.source
+    def __init__(self, args: Namespace, logger: ScopedLogger = get_logger(__name__)):
+        self.logger: ScopedLogger = logger
+        self.source: Path = args.munge.source
         self.filter: str = 'req'
-        self.registry: FileRegistry = FileRegistry()
-        self.diagnostic: Diagnostic = Diagnostic()
+        self.environment: MungeEnvironment = MungeEnvironment(logger=self.logger)
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
-        if args.tool:
-            if args.tool == Munger.Tool.ModelMunge:
+        if args.munge.tool:
+            if args.munge.tool == Munger.Tool.ModelMunge:
                 self.filter = 'msh'
-            elif args.tool == Munger.Tool.OdfMunge:
+            elif args.munge.tool == Munger.Tool.OdfMunge:
                 self.filter = 'odf'
-            elif args.tool == Munger.Tool.ScriptMunge:
+            elif args.munge.tool == Munger.Tool.ScriptMunge:
                 pass
 
     def setup(self):
@@ -80,34 +72,39 @@ class Munger:
         #self.ui.join()
 
     def munge(self):
-        parsers = {
-            'req': Req,
-            'msh': Msh,
-            'odf': Odf
-        }
+        parsers = {'req': ReqParser, 'msh': MshParser, 'odf': OdfParser}
         builders = {
             'req': Ucfb,
             'odf': Class,
+            'msh': Model,
         }
 
-        parser_type = parsers.get(self.filter, Req)
+        parser_type = parsers.get(self.filter, ReqParser)
         builder_type = builders.get(self.filter, Ucfb)
 
         if self.source.is_file():
-            parser = parser_type(registry=self.registry, filepath=self.source, logger=self.logger)
-            tree = parser.parse()
-            builder = builder_type(tree)
-            builder.build()
+            parser = parser_type(filepath=self.source, logger=self.logger)
+            tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
 
-            ucfb = Ucfb()
-            ucfb.add(builder)
-            ucfb.data()
-            print(ucfb.dump())
+            builder = builder_type(tree)
+            self.environment.statistic.record('build', parser.filepath, builder.build)
+
+            print(builder.dump(24))
+
+            #ucfb = Ucfb(tree)
+            #ucfb.add(builder)
+            #ucfb.data()
+            #print(ucfb.dump(24))
 
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
-                parser = parser_type(registry=self.registry, filepath=entry, logger=self.logger)
-                tree = parser.parse()
+                parser = parser_type(filepath=entry, logger=self.logger)
+                tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
+
                 builder = builder_type(tree)
-                builder.build()
-                print(builder.dump())
+                self.environment.statistic.record('build', parser.filepath, builder.build)
+
+                print(builder.dump(24))
+
+        self.environment.diagnostic.summary()
+        self.environment.statistic.summary()

@@ -1,19 +1,13 @@
 from pathlib import Path
-from struct import unpack
 import sys
 from logging import Logger
 
 from parxel.nodes import Node, BinaryNode
 from parxel.parser import BinaryParser
-from parxel.token import TK, Token
 
-from app.registry import FileRegistry, Dependency
-from swbf.parsers.format import BinaryFormat
+from app.environment import MungeEnvironment
+from swbf.parsers.parser import SwbfBinaryParser
 from util.logging import get_logger
-from util.enum import Enum
-
-
-logger = get_logger(__name__)
 
 
 class Chunk:
@@ -319,6 +313,19 @@ class Collision(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
+class CollisionPrimitive(Chunk, BinaryNode):
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        Chunk.__init__(self, msh_stream)
+
+        self.primitive_type: int = msh_stream.int32()
+        self.data0: float = msh_stream.float32()
+        self.data1: float = msh_stream.float32()
+        self.data2: float = msh_stream.float32()
+
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
 class ColorVertex(Chunk, BinaryNode):
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
@@ -607,7 +614,8 @@ class WeightBones(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Msh(BinaryFormat):
+class MshParser(SwbfBinaryParser):
+    filetype = 'msh'
 
     class Chunk:
         # Level 0
@@ -675,8 +683,8 @@ class Msh(BinaryFormat):
         UV0L = 'UV0L'
         WGHT = 'WGHT'
 
-    def __init__(self, registry: FileRegistry, filepath: Path, buffer: bytes = None, logger : Logger = logger):
-        BinaryFormat.__init__(self, registry=registry, filepath=filepath, buffer=buffer, logger=logger)
+    def __init__(self, filepath: Path, buffer: bytes = None, logger : Logger = get_logger(__name__)):
+        SwbfBinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)
 
     def _parse_chunk(self, children: dict) -> BinaryNode | Node | None:
         child_name = self.string(4)
@@ -705,7 +713,7 @@ class Msh(BinaryFormat):
 
     def parse_format(self):
         self._parse_chunk({
-            Msh.Chunk.HEDR: (self.parse_hedr, Header)
+            MshParser.Chunk.HEDR: (self.parse_hedr, Header)
         })
 
         return self
@@ -714,12 +722,12 @@ class Msh(BinaryFormat):
 
     def parse_hedr(self):
         while self._parse_chunk({
-            Msh.Chunk.ANM2: (self.parse_anm2, Animation),
-            Msh.Chunk.BLN2: (None, BlendFactor),
-            Msh.Chunk.MSH2: (self.parse_msh2, Mesh),
-            Msh.Chunk.SKL2: (None, Skeleton),
-            Msh.Chunk.SHV0: (None, ShadowVolume),
-            Msh.Chunk.CL1L: (None, ClosingChunk),
+            MshParser.Chunk.ANM2: (self.parse_anm2, Animation),
+            MshParser.Chunk.BLN2: (None, BlendFactor),
+            MshParser.Chunk.MSH2: (self.parse_msh2, Mesh),
+            MshParser.Chunk.SKL2: (None, Skeleton),
+            MshParser.Chunk.SHV0: (None, ShadowVolume),
+            MshParser.Chunk.CL1L: (None, ClosingChunk),
         }):
             pass
 
@@ -727,17 +735,17 @@ class Msh(BinaryFormat):
 
     def parse_anm2(self):
         while self._parse_chunk({
-            Msh.Chunk.CYCL: (self.parse_camr, AnimationCycle),
-            Msh.Chunk.KFR3: (self.parse_matl, Keyframes),
+            MshParser.Chunk.CYCL: (self.parse_camr, AnimationCycle),
+            MshParser.Chunk.KFR3: (self.parse_matl, Keyframes),
         }):
             pass
 
     def parse_msh2(self):
         while self._parse_chunk({
-            Msh.Chunk.CAMR: (self.parse_camr, Camera),
-            Msh.Chunk.MATL: (self.parse_matl, Material),
-            Msh.Chunk.MODL: (self.parse_modl, Model),
-            Msh.Chunk.SINF: (self.parse_sinf, SceneInformation),
+            MshParser.Chunk.CAMR: (self.parse_camr, Camera),
+            MshParser.Chunk.MATL: (self.parse_matl, Material),
+            MshParser.Chunk.MODL: (self.parse_modl, Model),
+            MshParser.Chunk.SINF: (self.parse_sinf, SceneInformation),
         }):
             pass
 
@@ -751,35 +759,35 @@ class Msh(BinaryFormat):
 
     def parse_camr(self):
         while self._parse_chunk({
-            Msh.Chunk.DATA: (None, DataCamera),
-            Msh.Chunk.NAME: (None, Name),
+            MshParser.Chunk.DATA: (None, DataCamera),
+            MshParser.Chunk.NAME: (None, Name),
         }):
             pass
 
     def parse_matl(self):
         while self._parse_chunk({
-            Msh.Chunk.MATD: (self.parse_matd, MaterialData),
+            MshParser.Chunk.MATD: (self.parse_matd, MaterialData),
         }):
             pass
 
     def parse_modl(self):
         while self._parse_chunk({
-            Msh.Chunk.FLGS: (None, FlagsModel),
-            Msh.Chunk.GEOM: (self.parse_geom, Geometry),
-            Msh.Chunk.NAME: (None, Name),
-            Msh.Chunk.MNDX: (None, ModelIndex),
-            Msh.Chunk.MTYP: (None, ModelType),
-            Msh.Chunk.PRNT: (None, ParentModel),
-            Msh.Chunk.SWCI: (None, BinaryNode),
-            Msh.Chunk.TRAN: (None, TransformModel)
+            MshParser.Chunk.FLGS: (None, FlagsModel),
+            MshParser.Chunk.GEOM: (self.parse_geom, Geometry),
+            MshParser.Chunk.NAME: (None, Name),
+            MshParser.Chunk.MNDX: (None, ModelIndex),
+            MshParser.Chunk.MTYP: (None, ModelType),
+            MshParser.Chunk.PRNT: (None, ParentModel),
+            MshParser.Chunk.SWCI: (None, CollisionPrimitive),
+            MshParser.Chunk.TRAN: (None, TransformModel)
         }):
             pass
 
     def parse_sinf(self):
         while self._parse_chunk({
-            Msh.Chunk.BBOX: (None, BoundingBox),
-            Msh.Chunk.FRAM: (None, Frame),
-            Msh.Chunk.NAME: (None, Name)
+            MshParser.Chunk.BBOX: (None, BoundingBox),
+            MshParser.Chunk.FRAM: (None, Frame),
+            MshParser.Chunk.NAME: (None, Name)
         }):
             pass
 
@@ -787,19 +795,19 @@ class Msh(BinaryFormat):
 
     def parse_geom(self):
         while self._parse_chunk({
-            Msh.Chunk.BBOX: (None, BoundingBox),
-            Msh.Chunk.CLTH: (self.parse_clth, ClothHeader),
-            Msh.Chunk.ENVL: (None, Envelope),
-            Msh.Chunk.SEGM: (self.parse_segm, SegmentHeader)
+            MshParser.Chunk.BBOX: (None, BoundingBox),
+            MshParser.Chunk.CLTH: (self.parse_clth, ClothHeader),
+            MshParser.Chunk.ENVL: (None, Envelope),
+            MshParser.Chunk.SEGM: (self.parse_segm, SegmentHeader)
         }):
             pass
 
     def parse_matd(self):
         while self._parse_chunk({
-            Msh.Chunk.ATRB: (None, Attributes),
-            Msh.Chunk.NAME: (None, Name),
-            Msh.Chunk.DATA: (None, DataMaterial),
-            Msh.Chunk.TX0D: (None, Texture)
+            MshParser.Chunk.ATRB: (None, Attributes),
+            MshParser.Chunk.NAME: (None, Name),
+            MshParser.Chunk.DATA: (None, DataMaterial),
+            MshParser.Chunk.TX0D: (None, Texture)
         }):
             pass
 
@@ -807,33 +815,33 @@ class Msh(BinaryFormat):
 
     def parse_segm(self):
         while self._parse_chunk({
-            Msh.Chunk.CLRB: (None, ColorVertex),
-            Msh.Chunk.CLRL: (None, ColorVertecies),
-            Msh.Chunk.MATI: (None, MaterialIndex),
-            Msh.Chunk.NDXL: (None, Polygons),
-            Msh.Chunk.NDXT: (None, Triangles),
-            Msh.Chunk.NRML: (None, Normals),
-            Msh.Chunk.POSL: (None, PositionVertices),
-            Msh.Chunk.SHDW: (None, ShadowMesh),
-            Msh.Chunk.STRP: (self.parse_strp, Strip),
-            Msh.Chunk.UV0L: (None, UvCoordinates),
-            Msh.Chunk.WGHT: (None, WeightBones)
+            MshParser.Chunk.CLRB: (None, ColorVertex),
+            MshParser.Chunk.CLRL: (None, ColorVertecies),
+            MshParser.Chunk.MATI: (None, MaterialIndex),
+            MshParser.Chunk.NDXL: (None, Polygons),
+            MshParser.Chunk.NDXT: (None, Triangles),
+            MshParser.Chunk.NRML: (None, Normals),
+            MshParser.Chunk.POSL: (None, PositionVertices),
+            MshParser.Chunk.SHDW: (None, ShadowMesh),
+            MshParser.Chunk.STRP: (self.parse_strp, Strip),
+            MshParser.Chunk.UV0L: (None, UvCoordinates),
+            MshParser.Chunk.WGHT: (None, WeightBones)
         }):
             pass
 
     def parse_clth(self):
         while self._parse_chunk({
             # TODO
-            Msh.Chunk.BPRS: (None, BendConstraints),
-            Msh.Chunk.CMSH: (None, ClothMesh),
-            Msh.Chunk.COLL: (None, Collision),
-            Msh.Chunk.CPOS: (None, ClothVertecies),
-            Msh.Chunk.CPRS: (None, CrossConstraints),
-            Msh.Chunk.CTEX: (None, ClothTextureName),
-            Msh.Chunk.CUV0: (None, ClothUvCoordinates),
-            Msh.Chunk.FIDX: (None, FixPoints),
-            Msh.Chunk.FWGT: (None, FixPointWeights),
-            Msh.Chunk.SPRS: (None, StretchConstraints)
+            MshParser.Chunk.BPRS: (None, BendConstraints),
+            MshParser.Chunk.CMSH: (None, ClothMesh),
+            MshParser.Chunk.COLL: (None, Collision),
+            MshParser.Chunk.CPOS: (None, ClothVertecies),
+            MshParser.Chunk.CPRS: (None, CrossConstraints),
+            MshParser.Chunk.CTEX: (None, ClothTextureName),
+            MshParser.Chunk.CUV0: (None, ClothUvCoordinates),
+            MshParser.Chunk.FIDX: (None, FixPoints),
+            MshParser.Chunk.FWGT: (None, FixPointWeights),
+            MshParser.Chunk.SPRS: (None, StretchConstraints)
         }):
             pass
 
@@ -841,15 +849,15 @@ class Msh(BinaryFormat):
 
     def parse_strp(self):
         while self._parse_chunk({
-            Msh.Chunk.BBOX: (None, BoundingBox),
-            Msh.Chunk.FRAM: (None, Frame),
-            Msh.Chunk.NAME: (None, Name)
+            MshParser.Chunk.BBOX: (None, BoundingBox),
+            MshParser.Chunk.FRAM: (None, Frame),
+            MshParser.Chunk.NAME: (None, Name)
         }):
             pass
 
 
 if __name__ == '__main__':
-    Msh.cmd_helper()
+    MshParser.cmd_helper()
 
     # TODO: Global exit code
     sys.exit(0)

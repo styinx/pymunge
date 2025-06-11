@@ -1,15 +1,20 @@
+from logging import Logger
 from pathlib import Path
 import re
 
 from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
-from app.registry import Dependency, FileRegistry
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
+from app.registry import Dependency
+from swbf.parsers.parser import SwbfTextParser
 from util.enum import Enum
 from util.logging import get_logger
 
-logger = get_logger(__name__)
+
+class ReqWarning(WarningMessage):
+    scope = 'REQ'
 
 
 class Comment(LexicalNode):
@@ -39,8 +44,8 @@ class Block(LexicalNode):
         self.header: str = self.raw().strip()
         self.type: str = ''
 
-        if self.header not in Req.Header:
-            logger.warning(f'Block header "{self.header}" is not known.')
+        if self.header not in ReqParser.Header:
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Type(LexicalNode):
@@ -50,8 +55,8 @@ class Type(LexicalNode):
 
         self.type: str = self.raw().strip()
 
-        if self.type not in Req.Type:
-            logger.warning(f'Block type "{self.type}" is not known.')
+        if self.type not in ReqParser.Type:
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block type "{self.type}" is not known.'))
 
 
 class Property(LexicalNode):
@@ -65,8 +70,8 @@ class Property(LexicalNode):
         self.key: str = match.group(1)
         self.value: str = match.group(2)
 
-        if self.key not in Req.Property:
-            logger.warning(f'Block property "{self.key}" is not known.')
+        if self.key not in ReqParser.Property:
+            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block property "{self.key}" is not known.'))
 
 
 class Value(LexicalNode, Dependency):
@@ -77,7 +82,7 @@ class Value(LexicalNode, Dependency):
 
         self.name: str = self.raw().strip()
 
-        if self.parent.type in Req.TypeFileMapping:
+        if self.parent.type in ReqParser.TypeFileMapping:
             # TODO: Make document the root
             # filepath = self.root
             def root(node) -> Document:
@@ -87,11 +92,12 @@ class Value(LexicalNode, Dependency):
                     return root(node.parent)
                 return None
 
-            ending = Req.TypeFileMapping[self.parent.type]
+            ending = ReqParser.TypeFileMapping[self.parent.type]
             self.filepath = (Path(root(self).filepath.parent) / f'{self.name}.{ending}').resolve()
 
 
-class Req(TextFormat):
+class ReqParser(SwbfTextParser):
+    filetype = 'req'
 
     class Header(Enum):
         Reqn = 'REQN'
@@ -131,8 +137,8 @@ class Req(TextFormat):
         Type.World: 'wld'
     }
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -217,7 +223,7 @@ class Req(TextFormat):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 
@@ -225,4 +231,4 @@ class Req(TextFormat):
 
 
 if __name__ == '__main__':
-    Req.cmd_helper()
+    ReqParser.cmd_helper()

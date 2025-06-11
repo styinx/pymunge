@@ -118,8 +118,8 @@ class ColorFormatter(logging.Formatter):
         LogLevel.Critical: (Ansi.RedForeground, Ansi.Bold),
     }
 
-    def __init__(self, format: str):
-        super().__init__(format)
+    def __init__(self, format: str, *args, **kwargs):
+        super().__init__(format, *args, **kwargs)
         self.format_string = format
 
     def format(self, record):
@@ -134,9 +134,12 @@ class ColorFormatter(logging.Formatter):
 def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_style: bool = False):
     logger = logging.getLogger(name)
 
+    datefmt='%Y-%m-%d %H:%M:%S'
+
     # Stream handler
     # yapf: disable
     stream_format = str(
+        '[%(asctime)s.%(msecs)03d]'
         '[%(levelname)-8s]'
         '[%(name)-8s]'
         '[%(filename)s:%(lineno)-d] '
@@ -147,9 +150,9 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
     stream_handler = logging.StreamHandler()
 
     if ansi_style:
-        stream_handler.setFormatter(ColorFormatter(stream_format))
+        stream_handler.setFormatter(ColorFormatter(stream_format, datefmt=datefmt))
     else:
-        stream_handler.setFormatter(logging.Formatter(stream_format))
+        stream_handler.setFormatter(logging.Formatter(stream_format, datefmt=datefmt))
 
     logger.addHandler(stream_handler)
 
@@ -157,6 +160,7 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
     if path.name:
         # yapf: disable
         file_format = str(
+            '%(asctime)s.%(msecs)03d | '
             '%(levelname)-8s | '
             '%(name)-8s | '
             '%(filename)s:%(lineno)-d   '
@@ -165,7 +169,7 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
         # yapf: enable
 
         file_handler = logging.FileHandler(path / (name + '.log'))
-        file_handler.setFormatter(logging.Formatter(file_format))
+        file_handler.setFormatter(logging.Formatter(file_format, datefmt=datefmt))
         logger.addHandler(file_handler)
 
     logger.setLevel(level.upper())

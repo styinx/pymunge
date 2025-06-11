@@ -1,4 +1,7 @@
+from parxel.nodes import Document
+
 from util.enum import Enum
+from swbf.parsers.req import ReqParser
 
 
 class Magic(Enum):
@@ -129,17 +132,21 @@ class BinaryProperty(UcfbNode):
         return string_data(self.magic) + int32_data(len(self.buffer)) + self.buffer
 
 
-class Chunk(UcfbNode):
+class SwbfUcfbBuilder(UcfbNode):
 
-    def __init__(self, magic: str):
+    def __init__(self, tree: Document, magic: str):
         UcfbNode.__init__(self)
 
+        self.tree: Document = tree
         self.magic: str = magic
         self.buffer: bytearray = bytearray()
 
     def __len__(self) -> int:
         # MAGIC , SIZE , children
         return 4 + 4 + sum(map(len, self.children))
+
+    def build(self):
+        raise NotImplementedError('This is an abstract base class!')
 
     def data(self) -> bytearray:
         buffer = bytearray()
@@ -196,17 +203,17 @@ class Chunk(UcfbNode):
         return dump
 
 
-class Ucfb(Chunk):
+class Ucfb(SwbfUcfbBuilder):
     "Universal Chunk Format Block (UCFB)"
 
-    def __init__(self):
-        Chunk.__init__(self, Magic.Ucfb)
+    def __init__(self, tree: ReqParser):
+        SwbfUcfbBuilder.__init__(self, tree, Magic.Ucfb)
 
 
-class Script(Chunk):
+class Script(SwbfUcfbBuilder):
 
     def __init__(self, name: str, info: str, body: bytearray):
-        Chunk.__init__(self, Magic.Script)
+        SwbfUcfbBuilder.__init__(self, Magic.Script)
 
         name_property = StringProperty('NAME', name)
         info_property = StringProperty('INFO', info)
@@ -217,10 +224,10 @@ class Script(Chunk):
         self.add(body_property)
 
 
-class Skeleton(Chunk):
+class Skeleton(SwbfUcfbBuilder):
 
     def __init__(self, name: str, root: str, properties: dict):
-        Chunk.__init__(self, Magic.Skeleton)
+        SwbfUcfbBuilder.__init__(self, Magic.Skeleton)
 
         info_property = StringProperty('INFO', name)  # msh name
         name_property = StringProperty('NAME', root)  # root name
@@ -229,10 +236,10 @@ class Skeleton(Chunk):
         self.add(name_property)
 
 
-class Model(Chunk):
+class Model(SwbfUcfbBuilder):
 
     def __init__(self, name: str, root: str, properties: dict):
-        Chunk.__init__(self, Magic.Model)
+        SwbfUcfbBuilder.__init__(self, Magic.Model)
 
         name_property = StringProperty('NAME', name)  # msh name
         node_property = StringProperty('NODE', root)  # root name

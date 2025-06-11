@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 import sys
 
@@ -5,12 +6,16 @@ from parxel.lexer import Lexer
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.registry import FileRegistry, Dependency
-from swbf.parsers.format import TextFormat
+from app.environment import MungeEnvironment
+from app.diagnostic import WarningMessage
+from app.registry import Dependency
+from swbf.parsers.parser import SwbfTextParser
 from util.logging import get_logger
 from util.enum import Enum
 
-logger = get_logger(__name__)
+
+class AsxWarning(WarningMessage):
+    scope = 'ASX'
 
 
 class Comment(LexicalNode):
@@ -53,8 +58,8 @@ class Switch(LexicalNode):
 
         self.value: str = self.raw().strip()
 
-        if self.value not in Asfx.Switch:
-            logger.warning(f'Switch "{self.value}" is not known.')
+        if self.value not in AsfxParser.Switch:
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Switch "{self.name}" is not known.'))
 
 
 class Config(LexicalNode):
@@ -64,11 +69,11 @@ class Config(LexicalNode):
 
         self.value: str = self.raw().strip()
 
-        if self.value not in Asfx.Config:
-            logger.warning(f'Config "{self.value}" is not known.')
+        if self.value not in AsfxParser.Config:
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Config "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.value]:
-        #    logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
+        #    self.logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
 
 
 class Value(LexicalNode):
@@ -78,14 +83,15 @@ class Value(LexicalNode):
 
         self.value: str = self.raw().strip()
 
-        if self.value not in Asfx.Value:
-            logger.warning(f'Value "{self.value}" is not known.')
+        if self.value not in AsfxParser.Value:
+            MungeEnvironment.Diagnostic.report(AsxWarning(f'Value "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.parent.value][self.parent.value]:
-        #    logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
+        #    self.logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
-class Asfx(TextFormat):
+class AsfxParser(SwbfTextParser):
+    filetype = 'asfx'
 
     class Switch(Enum):
         Resample = 'resample'
@@ -109,8 +115,8 @@ class Asfx(TextFormat):
         }
     }
 
-    def __init__(self, registry: FileRegistry, filepath: Path, tokens: list[Token] = None, logger=logger):
-        TextFormat.__init__(self, registry=registry, filepath=filepath, tokens=tokens, logger=logger)
+    def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
+        SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
     def parse_format(self):
         while self:
@@ -194,7 +200,9 @@ class Asfx(TextFormat):
 
             # Either skip or throw error
             else:
-                logger.warning(f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".')
+                self.self.logger.warning(
+                    f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".'
+                )
                 self.discard()
                 # self.error(TK.Null)
 
@@ -205,17 +213,17 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         path = Path(sys.argv[1])
         if path.is_file():
-            asfx = Asfx.read(filepath=path)
+            asfx = AsfxParser.read(filepath=path)
             print(asfx.dump())
         else:
             for file in path.rglob('*.asfx'):
                 try:
-                    asfx = Asfx.read(filepath=file)
+                    asfx = AsfxParser.read(filepath=file)
                 except Lexer.EmptyStreamException:
                     pass
 
     elif len(sys.argv) > 2:
-        asfx = Asfx.read(stream=sys.stdin)
+        asfx = AsfxParser.read(stream=sys.stdin)
     else:
         sys.exit(1)
 

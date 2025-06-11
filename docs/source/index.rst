@@ -1,24 +1,32 @@
-.. pymunge documentation master file, created by
-   sphinx-quickstart on Sat May  3 11:37:04 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 pymunge documentation
 =====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
 
+Quickstart
+====================
+
+For a quick start introduction on how to work with the pymunge code please take a look at :doc:`intro/quickstart_code`.
+If you are only interested on using pymunge take a look at :doc:`intro/quickstart_user`.
+
+
+Table of Contents
+=================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Introduction
+
+   intro/quickstart_code
+   intro/quickstart_user
+
+.. toctree::
+   :maxdepth: 5
+   :caption: Code
 
    pymunge
-   pymunge.app
-   pymunge.swbf
-   pymunge.swbf.builders
-   pymunge.swbf.parsers
-   pymunge.util
-   modules
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Appendix
+
+   glossary
