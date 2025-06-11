@@ -9,10 +9,7 @@ class Statistic:
         Build = 'build'
 
     def __init__(self):
-        self.times = {
-            'parse': {},
-            'build': {}
-        }
+        self.times = {}
 
     def record(self, tag: str, name: str, f: callable, *args, **kwargs):
         time, result = measure(f, *args, **kwargs)
@@ -25,8 +22,8 @@ class Statistic:
         return result
 
     def summary(self):
-        parse_time = duration(sum(x for x in self.times['parse'].values()))
-        build_time = duration(sum(x for x in self.times['build'].values()))
+        parse_time = duration(sum(x for x in self.times.get('parse', {}).values()))
+        build_time = duration(sum(x for x in self.times.get('build', {}).values()))
         string_len = len(max(parse_time, build_time))
 
         s = Ansi.color_fg(Ansi.GreenForeground, 'Statistic Summary: \n')

@@ -8,8 +8,8 @@ from parxel.parser import BinaryParser, TextParser
 from parxel.token import Token
 
 from app.environment import MungeEnvironment
-from app.diagnostic import ErrorMessage
 from app.registry import Dependency
+from util.diagnostic import ErrorMessage
 from util.logging import get_logger, ScopedLogger
 
 logger = get_logger(__name__)

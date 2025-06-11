@@ -3,6 +3,7 @@ from os import getcwd
 from pathlib import Path
 from sys import exit
 
+from app.environment import MungeEnvironment
 from app.munger import Munger
 from util.logging import LogLevel, get_logger
 from util.status import ExitCode
@@ -40,7 +41,7 @@ def create_parser():
 
     munge = run_parsers.add_parser('munge')
     munge.add_argument('-b', '--binary-dir', type=MungePath, default=CONFIG.munge.binary_dir)
-    munge.add_argument('-c', '--cache', type=File, default=CONFIG.munge.cache)
+    munge.add_argument('-c', '--cache', type=Path)
     munge.add_argument('-C', '--clean', action='store_true', default=CONFIG.munge.clean)
     munge.add_argument('-d', '--dry-run', action='store_true', default=CONFIG.munge.dry_run)
     munge.add_argument('-i', '--interactive', action='store_true', default=CONFIG.munge.interactive)
@@ -104,15 +105,23 @@ def main():
 
     try:
 
+        environment = MungeEnvironment(logger)
+
         if args.run == 'munge':
-            munger = Munger(args, logger)
+            munger = Munger(args, environment)
             #munger.run()
             munger.munge()
 
-        elif args.run == 'cache':
-            pass
+            if args.munge.cache:
+                environment.store(args.munge.cache)
 
-    except:
+        elif args.run == 'cache':
+            environment.load(args.cache.file)
+
+        environment.summary()
+
+    except Exception as e:
+        logger.error(e)
         return ExitCode.Failure
 
     return ExitCode.Success

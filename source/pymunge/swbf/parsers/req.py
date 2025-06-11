@@ -6,9 +6,9 @@ from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
 
