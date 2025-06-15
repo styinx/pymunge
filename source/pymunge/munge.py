@@ -14,7 +14,7 @@ from config import CONFIG, parse_config
 def MungePath(arg: str) -> Path:
     path = Path(arg)
     if not path.exists():
-        path.mkdir()  # TODO: should parents be created and existing folders overwritten?
+        path.mkdir(parents=True)  # TODO: should parents be created and existing folders overwritten?
     return path.resolve()
 
 
@@ -44,6 +44,7 @@ def create_parser():
     munge.add_argument('-c', '--cache', type=Path)
     munge.add_argument('-C', '--clean', action='store_true', default=CONFIG.munge.clean)
     munge.add_argument('-d', '--dry-run', action='store_true', default=CONFIG.munge.dry_run)
+    munge.add_argument('-f', '--flags', type=str, action='append', choices=list(Munger.Flags))
     munge.add_argument('-i', '--interactive', action='store_true', default=CONFIG.munge.interactive)
     munge.add_argument('-m', '--munge-mode', type=str, default=CONFIG.munge.munge_mode, choices=list(Munger.Mode))
     munge.add_argument('-p', '--platform', type=str, default=CONFIG.munge.platform, choices=list(Munger.Platform))
@@ -121,7 +122,8 @@ def main():
         environment.summary()
 
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
+
         return ExitCode.Failure
 
     return ExitCode.Success

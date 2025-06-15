@@ -26,7 +26,7 @@ class Statistic:
         build_time = duration(sum(x for x in self.times.get('build', {}).values()))
         string_len = len(max(parse_time, build_time))
 
-        s = Ansi.color_fg(Ansi.GreenForeground, 'Statistic Summary: \n')
+        s = Ansi.color_fg(Ansi.GreenForeground, '\nStatistic Summary: \n')
         s += Ansi.color_fg(Ansi.CyanForeground, f'  Parse time: {parse_time:>{string_len}s}\n')
         s += Ansi.color_fg(Ansi.CyanForeground, f'  Build time: {build_time:>{string_len}s}\n')
         print(s)

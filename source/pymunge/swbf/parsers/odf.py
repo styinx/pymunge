@@ -13,7 +13,7 @@ from util.enum import Enum
 from util.logging import get_logger
 
 
-class OdfWarning(WarningMessage):
+class OdfParserWarning(WarningMessage):
     scope = 'ODF'
 
 
@@ -33,7 +33,7 @@ class Key(LexicalNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            MungeEnvironment.Diagnostic.report(OdfWarning(f'Key name "{self.name}" is not known.'))
+            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Key name "{self.name}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -62,7 +62,7 @@ class Section(LexicalNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            MungeEnvironment.Diagnostic.report(OdfWarning(f'Section name "{self.name}" is not known.'))
+            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Section name "{self.name}" is not known.'))
 
 
 class OdfParser(SwbfTextParser):

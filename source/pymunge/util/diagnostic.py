@@ -95,7 +95,7 @@ class Diagnostic:
         for m in self.messages:
             m.print()
 
-        s = Ansi.color_fg(Ansi.GreenForeground, 'Diagnostic Summary: \n')
+        s = Ansi.color_fg(Ansi.GreenForeground, '\nDiagnostic Summary: \n')
         s += Ansi.color_fg(Ansi.RedForeground, f'{self.severeties[Severity.Error]:3d}' + ' Errors \n')
         s += Ansi.color_fg(Ansi.YellowForeground, f'{self.severeties[Severity.Warning]:3d}' + ' Warnings \n')
         s += Ansi.color_fg(Ansi.CyanForeground, f'{self.severeties[Severity.Info]:3d}' + ' Infos \n')

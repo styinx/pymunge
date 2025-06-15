@@ -13,7 +13,8 @@ class Magic(Enum):
     Data = 'DATA'
     Dxt1 = 'DXT1'
     Dxt3 = 'DXT3'
-    Entc = 'entc'
+    EntityClass = 'entc'
+    ExplosionClass = 'expc'
     Face = 'FACE'
     Flag = 'FLAG'
     Format = 'FMT_'
@@ -29,6 +30,7 @@ class Magic(Enum):
     Material = 'MTRL'
     Mina = 'MINA'
     Model = 'modl'
+    OrdnanceClass = 'ordc'
     Plan = 'plan'
     Property = 'PROP'
     Prnt = 'PRNT'
@@ -50,6 +52,7 @@ class Magic(Enum):
     Type = 'TYPE'
     Ucfb = 'ucfb'
     Vbuf = 'VBUF'
+    WeaponClass = 'wpnc'
     Xfrm = 'XFRM'
 
 
@@ -79,6 +82,7 @@ class StringProperty(UcfbNode):
 
         self.magic: str = magic
         self.string: str = string
+        self.length: int = len(string) + 1
 
         self.string += '\0'
 
@@ -88,11 +92,11 @@ class StringProperty(UcfbNode):
                 self.string += '\0' * (4 - alignment)
 
     def __len__(self) -> int:
-        # MAGIC , SIZE , string + (padding)
-        return 4 + 4 + len(self.string)
+        # MAGIC , SIZE , string
+        return 4 + 4 + self.length
 
     def data(self) -> bytes:
-        return string_data(self.magic) + int32_data(len(self.string)) + string_data(self.string)
+        return string_data(self.magic) + int32_data(self.length) + string_data(self.string)
 
 
 class NumberProperty(UcfbNode):
@@ -118,6 +122,7 @@ class BinaryProperty(UcfbNode):
 
         self.magic: str = magic
         self.buffer: bytearray = buffer
+        self.length = len(buffer)
 
         if pad:
             alignment = len(self.buffer) % 4
@@ -126,10 +131,10 @@ class BinaryProperty(UcfbNode):
 
     def __len__(self) -> int:
         # MAGIC , SIZE , buffer
-        return 4 + 4 + len(self.buffer)
+        return 4 + 4 + self.length
 
     def data(self) -> bytes:
-        return string_data(self.magic) + int32_data(len(self.buffer)) + self.buffer
+        return string_data(self.magic) + int32_data(self.length) + self.buffer
 
 
 class SwbfUcfbBuilder(UcfbNode):
@@ -142,8 +147,8 @@ class SwbfUcfbBuilder(UcfbNode):
         self.buffer: bytearray = bytearray()
 
     def __len__(self) -> int:
-        # MAGIC , SIZE , children
-        return 4 + 4 + sum(map(len, self.children))
+        # MAGIC , SIZE , children with padded length
+        return 4 + 4 + sum(map(lambda x: len(x.data()), self.children))
 
     def build(self):
         raise NotImplementedError('This is an abstract base class!')

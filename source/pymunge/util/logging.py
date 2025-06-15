@@ -118,16 +118,17 @@ class ColorFormatter(logging.Formatter):
         LogLevel.Critical: (Ansi.RedForeground, Ansi.Bold),
     }
 
-    def __init__(self, format: str, *args, **kwargs):
+    def __init__(self, format: str, datefmt: str, *args, **kwargs):
         super().__init__(format, *args, **kwargs)
         self.format_string = format
+        self.datefmt = datefmt
 
     def format(self, record):
         style = ';'.join(list(map(str, ColorFormatter.LevelStyle[record.levelname.lower()])))
         prefix = Ansi.Escape.format(style)
         suffix = Ansi.Escape.format(Ansi.Reset)
         log_format = prefix + self.format_string + suffix
-        formatter = logging.Formatter(log_format)
+        formatter = logging.Formatter(log_format, datefmt=self.datefmt)
         return formatter.format(record)
 
 

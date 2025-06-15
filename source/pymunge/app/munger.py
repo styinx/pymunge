@@ -18,6 +18,10 @@ class Munger:
     Entry point of the munging process.
     """
 
+    class Flags(Enum):
+        Test1 = 'Test1'
+        Test2 = 'Test2'
+
     class Mode(Enum):
         Side = 'side'
         Sound = 'sound'
@@ -40,9 +44,13 @@ class Munger:
     def __init__(self, args: Namespace, environment: MungeEnvironment):
         self.environment: MungeEnvironment = environment
         self.source: Path = args.munge.source
+        self.target: Path = args.munge.target
         self.filter: str = 'req'
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
+
+        if not self.target.exists():
+            self.target.mkdir(parents=True)
 
         if args.munge.tool:
             if args.munge.tool == Munger.Tool.ModelMunge:
@@ -87,12 +95,18 @@ class Munger:
             builder = builder_type(tree)
             self.environment.statistic.record('build', parser.filepath, builder.build)
 
-            print(builder.dump(24))
+            ucfb = Ucfb(tree)
+            ucfb.add(builder)
+            ucfb.data()
 
-            #ucfb = Ucfb(tree)
-            #ucfb.add(builder)
-            #ucfb.data()
             #print(ucfb.dump(24))
+            #print(builder.dump(24))
+
+            path = self.target / (parser.filepath.name + '.class')
+            with path.open('wb+') as f:
+                self.environment.logger.info(f'Write to "{path}"')
+                f.write(ucfb.data())
+
 
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
