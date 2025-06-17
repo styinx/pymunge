@@ -1,4 +1,5 @@
 import logging
+import sys
 from pathlib import Path
 from util.enum import Enum
 
@@ -148,7 +149,7 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
     )
     # yapf: enable
 
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(sys.stdout)
 
     if ansi_style:
         stream_handler.setFormatter(ColorFormatter(stream_format, datefmt=datefmt))

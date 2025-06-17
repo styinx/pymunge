@@ -151,7 +151,10 @@ class SwbfUcfbBuilder(UcfbNode):
         return 4 + 4 + sum(map(lambda x: len(x.data()), self.children))
 
     def build(self):
-        raise NotImplementedError('This is an abstract base class!')
+        raise NotImplementedError(
+            f'This is an abstract base class! '
+            f'Implement "build(self)" for class "{self.__class__.__name__}"'
+        )
 
     def data(self) -> bytearray:
         buffer = bytearray()
@@ -213,6 +216,9 @@ class Ucfb(SwbfUcfbBuilder):
 
     def __init__(self, tree: ReqParser):
         SwbfUcfbBuilder.__init__(self, tree, Magic.Ucfb)
+
+    def build(self):
+        return self
 
 
 class Script(SwbfUcfbBuilder):

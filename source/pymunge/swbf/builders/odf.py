@@ -77,6 +77,7 @@ class Class(SwbfUcfbBuilder):
                                     'PROP',
                                     int32_data(fnv1a_32(node.name)) + (val.value.replace('"', '') + chr(0)).encode('utf-8')
                                 )
+                                print(prop.buffer)
                                 self.add(prop)
 
                         else:

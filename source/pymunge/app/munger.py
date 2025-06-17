@@ -44,7 +44,7 @@ class Munger:
     def __init__(self, args: Namespace, environment: MungeEnvironment):
         self.environment: MungeEnvironment = environment
         self.source: Path = args.munge.source
-        self.target: Path = args.munge.target
+        self.target: Path = args.munge.target / '_munged'
         self.filter: str = 'req'
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
@@ -116,5 +116,12 @@ class Munger:
                 builder = builder_type(tree)
                 self.environment.statistic.record('build', parser.filepath, builder.build)
 
-                print(builder.dump(24))
+                ucfb = Ucfb(tree)
+                ucfb.add(builder)
+                ucfb.data()
+
+                path = self.target / (parser.filepath.name + '.class')
+                with path.open('wb+') as f:
+                    self.environment.logger.info(f'Write to "{path}"')
+                    f.write(ucfb.data())
 

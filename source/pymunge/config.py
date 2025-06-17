@@ -31,7 +31,7 @@ CONFIG = Namespace(**{
         'platform': Munger.Platform.PC,
         'resolve_dependencies': True,
         'source': Path(getcwd()),
-        'target': Path(getcwd()) / 'munged/',
+        'target': Path(getcwd()),
         'tool': None,
     }),
 

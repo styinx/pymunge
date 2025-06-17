@@ -3,7 +3,7 @@ from pathlib import Path
 
 class Dependency:
 
-    def __init__(self, filepath: Path = None):
+    def __init__(self, filepath: Path | None = None):
         self.filepath = filepath
 
 
