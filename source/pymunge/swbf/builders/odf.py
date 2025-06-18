@@ -57,7 +57,7 @@ class Class(SwbfUcfbBuilder):
                         # TODO: filter out duplicates and invalid props
 
                         # Filter out duplicated GeometryName
-                        if not geom_name_skipped and node.name == OdfParser.Key.GeometryName:
+                        if self.magic == Magic.EntityClass and not geom_name_skipped and node.name == OdfParser.Key.GeometryName:
                             next(it)
                             geom_name_skipped = True
                             continue
@@ -77,7 +77,6 @@ class Class(SwbfUcfbBuilder):
                                     'PROP',
                                     int32_data(fnv1a_32(node.name)) + (val.value.replace('"', '') + chr(0)).encode('utf-8')
                                 )
-                                print(prop.buffer)
                                 self.add(prop)
 
                         else:

@@ -1156,7 +1156,7 @@ class OdfParser(SwbfTextParser):
 
                 self.collect_tokens()  # Discard whitespaces and '=' between key and value
 
-                self.consume_until(TK.LineFeed)
+                self.consume_until_any([TK.LineFeed, TK.Slash])
 
                 value_tokens = self.collect_tokens()
                 value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
@@ -1172,7 +1172,7 @@ class OdfParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                self.self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
                 self.discard()
                 # self.error(TK.Null)
 

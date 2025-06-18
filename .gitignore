@@ -1,3 +1,5 @@
+*.bin
+*.pickle
 *.pyc
 *.log
 *.vim
@@ -5,4 +7,5 @@
 build/
 dist/
 **/_build/
+**/_munged/
 **/*egg-info/
