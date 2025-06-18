@@ -3,6 +3,7 @@ from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
 from app.environment import MungeEnvironment
+from app.statistic import Statistic
 from app.ui import gui
 from swbf.parsers.odf import OdfParser
 from swbf.parsers.msh import MshParser
@@ -88,12 +89,12 @@ class Munger:
         parser_type = parsers.get(self.filter, ReqParser)
         builder_type = builders.get(self.filter, Ucfb)
 
-        if self.source.is_file():
-            parser = parser_type(filepath=self.source, logger=self.environment.logger)
-            tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
+        def build_file(file: Path):
+            parser = parser_type(filepath=file, logger=self.environment.logger)
+            tree = self.environment.statistic.record('parse', str(parser.filepath), parser.parse)
 
             builder = builder_type(tree)
-            self.environment.statistic.record('build', parser.filepath, builder.build)
+            self.environment.statistic.record('build', str(parser.filepath), builder.build)
 
             ucfb = Ucfb(tree)
             ucfb.add(builder)
@@ -107,21 +108,10 @@ class Munger:
                 self.environment.logger.info(f'Write to "{path}"')
                 f.write(ucfb.data())
 
+        if self.source.is_file():
+            build_file(self.source)
 
         else:
             for entry in self.source.rglob(f'*.{self.filter}'):
-                parser = parser_type(filepath=entry, logger=self.environment.logger)
-                tree = self.environment.statistic.record('parse', parser.filepath, parser.parse)
-
-                builder = builder_type(tree)
-                self.environment.statistic.record('build', parser.filepath, builder.build)
-
-                ucfb = Ucfb(tree)
-                ucfb.add(builder)
-                ucfb.data()
-
-                path = self.target / (parser.filepath.name + '.class')
-                with path.open('wb+') as f:
-                    self.environment.logger.info(f'Write to "{path}"')
-                    f.write(ucfb.data())
+                build_file(entry)
 

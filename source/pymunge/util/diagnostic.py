@@ -91,10 +91,11 @@ class Diagnostic:
         elif message.severity == Severity.Info:
             self.logger.info(message.text)
 
-    def summary(self):
+    def details(self):
         for m in self.messages:
             m.print()
 
+    def summary(self):
         s = Ansi.color_fg(Ansi.GreenForeground, '\nDiagnostic Summary: \n')
         s += Ansi.color_fg(Ansi.RedForeground, f'{self.severeties[Severity.Error]:3d}' + ' Errors \n')
         s += Ansi.color_fg(Ansi.YellowForeground, f'{self.severeties[Severity.Warning]:3d}' + ' Warnings \n')

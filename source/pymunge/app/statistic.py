@@ -5,8 +5,8 @@ from util.time import measure, duration
 class Statistic:
 
     class Tag:
-        Parse = 'parse'
-        Build = 'build'
+        Parse = 'Parse'
+        Build = 'Build'
 
     def __init__(self):
         self.times = {}
@@ -21,12 +21,24 @@ class Statistic:
 
         return result
 
+    def details(self):
+        for tag, keys in self.times.items():
+            times = self.times[tag]
+            key_len = max(map(len, times.keys()))
+            time_len = max(map(lambda x: len(duration(x)), times.values()))
+
+            s = Ansi.color_fg(Ansi.GreenForeground, f'\nStatistic Details "{tag}": \n')
+            for key, time in {k: duration(v) for k, v in sorted(times.items(), key=lambda x : x[1])}.items():
+                s += Ansi.color_fg(Ansi.CyanForeground, f'  {key:<{key_len}s}: {time:>{time_len}s}\n')
+            print(s)
+
     def summary(self):
-        parse_time = duration(sum(x for x in self.times.get('parse', {}).values()))
-        build_time = duration(sum(x for x in self.times.get('build', {}).values()))
-        string_len = len(max(parse_time, build_time))
+        summed_times = {tag: duration(sum(x for x in keys.values())) for tag, keys in self.times.items()}
+
+        tag_len = max(map(len, self.times.keys()))
+        time_len = max(map(len, summed_times.values()))
 
         s = Ansi.color_fg(Ansi.GreenForeground, '\nStatistic Summary: \n')
-        s += Ansi.color_fg(Ansi.CyanForeground, f'  Parse time: {parse_time:>{string_len}s}\n')
-        s += Ansi.color_fg(Ansi.CyanForeground, f'  Build time: {build_time:>{string_len}s}\n')
+        for tag, time in summed_times.items():
+            s += Ansi.color_fg(Ansi.CyanForeground, f'  {tag:<{tag_len}s}: {time:>{time_len}s}\n')
         print(s)

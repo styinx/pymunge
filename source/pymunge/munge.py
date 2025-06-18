@@ -119,6 +119,7 @@ def main():
         elif args.run == 'cache':
             environment.load(args.cache.file)
 
+        environment.details()
         environment.summary()
 
     except Exception as e:

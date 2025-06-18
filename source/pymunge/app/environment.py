@@ -47,6 +47,10 @@ class MungeEnvironment:
         self.diagnostic = dump['diagnostic']
         self.statistic = dump['statistic']
 
+    def details(self):
+        self.statistic.details()
+        self.diagnostic.details()
+
     def summary(self):
-        self.diagnostic.summary()
         self.statistic.summary()
+        self.diagnostic.summary()
