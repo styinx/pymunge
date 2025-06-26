@@ -2,6 +2,7 @@ from argparse import ArgumentParser, ArgumentTypeError, Namespace, _SubParsersAc
 from os import getcwd
 from pathlib import Path
 from sys import exit
+import traceback
 
 from app.environment import MungeEnvironment
 from app.munger import Munger
@@ -109,7 +110,7 @@ def main():
         environment = MungeEnvironment(logger)
 
         if args.run == 'munge':
-            munger = Munger(args, environment)
+            munger = Munger(args)
             #munger.run()
             munger.munge()
 
@@ -119,11 +120,14 @@ def main():
         elif args.run == 'cache':
             environment.load(args.cache.file)
 
-        environment.details()
+        if args.log_level == LogLevel.Debug:
+            environment.details()
+
         environment.summary()
 
     except Exception as e:
         logger.error(str(e))
+        print(traceback.format_exc())
 
         return ExitCode.Failure
 

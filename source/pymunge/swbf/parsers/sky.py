@@ -4,9 +4,9 @@ from pathlib import Path
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
+from app.environment import MungeEnvironment as ENV
 from swbf.parsers.parser import SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
 
@@ -31,7 +31,7 @@ class Block(LexicalNode):
         self.header: str = self.raw().replace('(', '').replace(')', '').strip()
 
         if self.header not in SkyParser.Header:
-            MungeEnvironment.Diagnostic.report(SkyWarning(f'Block header "{self.header}" is not known.'))
+            ENV.Diag.report(SkyWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Function(LexicalNode):
@@ -45,11 +45,11 @@ class Function(LexicalNode):
         self.arguments: list[str] = function[1:]
 
         if self.name not in SkyParser.Function:
-            MungeEnvironment.Diagnostic.report(SkyWarning(f'Function name "{self.name}" is not known.'))
+            ENV.Diag.report(SkyWarning(f'Function name "{self.name}" is not known.'))
 
 
 class SkyParser(SwbfTextParser):
-    filetype = 'sky'
+    extension = 'sky'
 
     class Header(Enum):
         FlatInfo = 'FlatInfo'

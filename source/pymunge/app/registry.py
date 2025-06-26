@@ -10,8 +10,16 @@ class Dependency:
 class FileRegistry:
 
     def __init__(self):
-        self.lookup = {
-            'premunge': {},
-            'postmunge': {},
-            'ignored': {},
+        self.source_files = {}
+        self.build_files = {}
+
+    def add_source_file(self, path: Path):
+        self.source_files[path] = {
+            'dependencies': []
         }
+
+    def add_build_file(self, path: Path):
+        self.build_files[path] = {
+            'dependencies': []
+        }
+

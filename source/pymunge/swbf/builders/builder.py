@@ -98,7 +98,6 @@ class StringProperty(UcfbNode):
     def data(self) -> bytes:
         return string_data(self.magic) + int32_data(self.length) + string_data(self.string)
 
-
 class NumberProperty(UcfbNode):
 
     def __init__(self, magic: str, number: int):
@@ -138,6 +137,7 @@ class BinaryProperty(UcfbNode):
 
 
 class SwbfUcfbBuilder(UcfbNode):
+    extension = 'bin'
 
     def __init__(self, tree: Document, magic: str):
         UcfbNode.__init__(self)

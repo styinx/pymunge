@@ -10,13 +10,14 @@ from util.logging import get_logger, ScopedLogger
 class MungeEnvironment:
     """
     Singleton class which is initialized once in the :class:`Munger`.
-    Provides access to the :class:`Diagnostic`, :class:`Registry`, and
-    :class:`Statistic`.
+    Provides access to the :class:`Diagnostic`, :class:`ScopedLogger`,
+    :class:`Registry`, and :class:`Statistic`.
     """
 
-    Diagnostic = None
-    Registry = None
-    Statistic = None
+    Diag: Diagnostic = None
+    Log: ScopedLogger = None
+    Reg: FileRegistry = None
+    Stat: Statistic = None
 
     def __init__(self, logger: ScopedLogger = get_logger(__name__)):
         self.logger: ScopedLogger = logger
@@ -24,12 +25,14 @@ class MungeEnvironment:
         self.registry: FileRegistry = FileRegistry()
         self.statistic: Statistic = Statistic()
 
-        if not MungeEnvironment.Diagnostic:
-            MungeEnvironment.Diagnostic = self.diagnostic
-        if not MungeEnvironment.Registry:
-            MungeEnvironment.Registry = self.registry
-        if not MungeEnvironment.Statistic:
-            MungeEnvironment.Statistic = self.statistic
+        if not MungeEnvironment.Diag:
+            MungeEnvironment.Diag = self.diagnostic
+        if not MungeEnvironment.Log:
+            MungeEnvironment.Log = self.logger
+        if not MungeEnvironment.Reg:
+            MungeEnvironment.Reg = self.registry
+        if not MungeEnvironment.Stat:
+            MungeEnvironment.Stat = self.statistic
 
     def store(self, file: Path):
         pickle.dump({

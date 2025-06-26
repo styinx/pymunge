@@ -7,7 +7,7 @@ from parxel.nodes import Document
 from parxel.parser import BinaryParser, TextParser
 from parxel.token import Token
 
-from app.environment import MungeEnvironment
+from app.environment import MungeEnvironment as ENV
 from app.registry import Dependency
 from util.diagnostic import ErrorMessage
 from util.logging import get_logger, ScopedLogger
@@ -16,20 +16,20 @@ logger = get_logger(__name__)
 
 
 class SwbfParser:
-    filetype = ''
+    extension = ''
 
     def __init__(self, logger: ScopedLogger = get_logger(__name__)) -> None:
         self.logger: ScopedLogger = logger
 
     def register_dependency(self, dependency: Dependency):
         if dependency.filepath:
-            MungeEnvironment.Registry.lookup['premunge'][dependency.filepath.name] = dependency
+            ENV.Reg.lookup['premunge'][dependency.filepath.name] = dependency
             self.logger.debug(f'Add dependency: {dependency.filepath}')
 
     @classmethod
     def cmd_helper(cls: type):
         # Stub
-        MungeEnvironment(get_logger(__name__))
+        ENV(get_logger(__name__))
 
         if len(sys.argv) == 2:
             if not isinstance(sys.argv[0], io.TextIOWrapper):
@@ -41,7 +41,7 @@ class SwbfParser:
                     print(parser.dump())
 
                 elif path.is_dir():
-                    for file in path.rglob(f'*.{cls.filetype}'):
+                    for file in path.rglob(f'*.{cls.extension}'):
                         print(file)
                         req = cls(filepath=file)
                         req.parse()
@@ -81,9 +81,7 @@ class SwbfBinaryParser(Document, BinaryParser, SwbfParser):
 
     def __init__(self, filepath: Path, buffer: bytes | None = None, logger: ScopedLogger = get_logger(__name__)):
 
-        SwbfParser.__init__(
-            self,
-        )
+        SwbfParser.__init__(self, logger=logger)
         Document.__init__(self, filepath=filepath)
         BinaryParser.__init__(self, buffer=buffer, filepath=filepath, logger=logger)
 

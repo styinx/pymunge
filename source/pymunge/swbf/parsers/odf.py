@@ -5,7 +5,7 @@ import re
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
+from app.environment import MungeEnvironment as ENV
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
@@ -17,31 +17,39 @@ class OdfParserWarning(WarningMessage):
     scope = 'ODF'
 
 
-class Comment(LexicalNode):
+class OdfNode(LexicalNode):
+    def __init__(self, tokens: list[Token], parent: Node = None):
+        super().__init__(tokens, parent)
+
+
+class Comment(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.text: str = self.raw().strip()
 
 
-class Key(LexicalNode):
+class Key(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Key name "{self.name}" is not known.'))
+            ENV.Diag.report(OdfParserWarning(f'Key name "{self.name}" is not known.'))
 
 
-class Value(LexicalNode):
+class Value(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.value: str = self.raw().strip()
+
+    def raw_value(self) -> str:
+        return self.value.replace('"', '')
 
 
 class Reference(Value, Dependency):
@@ -53,20 +61,23 @@ class Reference(Value, Dependency):
         filepath = Path(self.raw())
         Dependency.__init__(self, filepath.resolve())
 
+    def raw_stem(self) -> str:
+        return self.filepath.stem.replace('"', '')
 
-class Section(LexicalNode):
+
+class Section(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Section name "{self.name}" is not known.'))
+            ENV.Diag.report(OdfParserWarning(f'Section name "{self.name}" is not known.'))
 
 
 class OdfParser(SwbfTextParser):
-    filetype = 'odf'
+    extension = 'odf'
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'

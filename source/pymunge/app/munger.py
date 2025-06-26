@@ -2,14 +2,14 @@ from argparse import Namespace
 from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
-from app.environment import MungeEnvironment
+from app.environment import MungeEnvironment as ENV
 from app.statistic import Statistic
 from app.ui import gui
 from swbf.parsers.odf import OdfParser
 from swbf.parsers.msh import MshParser
 from swbf.parsers.req import ReqParser
-from swbf.builders.odf import Class
-from swbf.builders.msh import Model
+from swbf.builders.odf import ClassBuilder
+from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
 from util.enum import Enum
 
@@ -33,20 +33,30 @@ class Munger:
         """
         If specified the munge tool filters the input of the munging process.
         """
+        AnimationMunge = 'AnimationMunge'
+        BinMunge = 'BinMunge'
+        ConfigMunge = 'ConfigMunge'
+        LevelPack = 'LevelPack'
+        LocalizeMunge = 'LocalizeMunge'
         OdfMunge = 'OdfMunge'
         ModelMunge = 'ModelMunge'
+        MovieMunge = 'MovieMunge'
+        PathMunge = 'PathMunge'
+        PathPlanningMunge = 'PathPlanningMunge'
         ScriptMunge = 'ScriptMunge'
+        TerrainMunge = 'TerrainMunge'
+        TextureMunge = 'TextureMunge'
+        WorldMunge = 'WorldMunge'
 
     class Platform(Enum):
         PC = 'pc'
         PS2 = 'ps2'
         XBOX = 'xbox'
 
-    def __init__(self, args: Namespace, environment: MungeEnvironment):
-        self.environment: MungeEnvironment = environment
+    def __init__(self, args: Namespace):
         self.source: Path = args.munge.source
         self.target: Path = args.munge.target / '_munged'
-        self.filter: str = 'req'
+        self.source_filter: str = 'req'
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
@@ -55,11 +65,11 @@ class Munger:
 
         if args.munge.tool:
             if args.munge.tool == Munger.Tool.ModelMunge:
-                self.filter = 'msh'
+                self.source_filter = 'msh'
             elif args.munge.tool == Munger.Tool.OdfMunge:
-                self.filter = 'odf'
+                self.source_filter = 'odf'
             elif args.munge.tool == Munger.Tool.ScriptMunge:
-                pass
+                self.source_filter = 'lua'
 
     def setup(self):
         self.processes = [Process(target=self.worker)] * (CPUS() - 1)
@@ -79,39 +89,46 @@ class Munger:
         #self.ui.join()
 
     def munge(self):
-        parsers = {'req': ReqParser, 'msh': MshParser, 'odf': OdfParser}
+        parsers = {
+            'msh': MshParser,
+            'odf': OdfParser,
+            'req': ReqParser,
+        }
         builders = {
+            'msh': ModelBuilder,
+            'odf': ClassBuilder,
             'req': Ucfb,
-            'odf': Class,
-            'msh': Model,
         }
 
-        parser_type = parsers.get(self.filter, ReqParser)
-        builder_type = builders.get(self.filter, Ucfb)
-
         def build_file(file: Path):
-            parser = parser_type(filepath=file, logger=self.environment.logger)
-            tree = self.environment.statistic.record('parse', str(parser.filepath), parser.parse)
+            parser_type = parsers.get(self.source_filter, ReqParser)
+            builder_type = builders.get(self.source_filter, Ucfb)
+
+            parser = parser_type(filepath=file, logger=ENV.Log)
+            tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
+            ENV.Reg.add_source_file(parser.filepath)
 
             builder = builder_type(tree)
-            self.environment.statistic.record('build', str(parser.filepath), builder.build)
+            build_file_name = parser.filepath.name + f'.{builder.extension}'
+            build_file = self.target / build_file_name
+            ENV.Stat.record('build', str(build_file), builder.build)
 
+            # Pack the built file into an ucfb
             ucfb = Ucfb(tree)
             ucfb.add(builder)
             ucfb.data()
 
-            #print(ucfb.dump(24))
-            #print(builder.dump(24))
-
-            path = self.target / (parser.filepath.name + '.class')
-            with path.open('wb+') as f:
-                self.environment.logger.info(f'Write to "{path}"')
+            with build_file.open('wb+') as f:
+                ENV.Log.debug(f'Writing "{build_file}"')
                 f.write(ucfb.data())
+                ENV.Reg.add_build_file(build_file)
 
         if self.source.is_file():
             build_file(self.source)
 
         else:
-            for entry in self.source.rglob(f'*.{self.filter}'):
+            ENV.Log.info(f'Processing "{self.source}"')
+            for entry in self.source.rglob(f'*.{self.source_filter}'):
                 build_file(entry)
+            ENV.Log.info(f'Results written to "{self.target}"')
 

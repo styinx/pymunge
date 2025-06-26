@@ -1,7 +1,7 @@
 from time import perf_counter_ns as timer
 
 
-def duration(d: int):
+def duration(d: int, pad: bool = False):
     ns = d % 1000
     us = d // 1000 % 1000
     ms = d // (1000 * 1000) % 1000
@@ -12,13 +12,13 @@ def duration(d: int):
 
     if m:
         f += f'{m:2d}m '
-    if s:
+    if s or f and pad:
         f += f'{s:2d}s '
-    if ms:
+    if ms or f and pad:
         f += f'{ms:3d}ms '
-    if us:
+    if us or f and pad:
         f += f'{us:3d}us '
-    if ns:
+    if ns or f and pad:
         f += f'{ns:3d}ns '
 
     return f.strip()

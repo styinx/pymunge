@@ -6,10 +6,10 @@ from parxel.lexer import Lexer
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
+from app.environment import MungeEnvironment as ENV
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -59,7 +59,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Switch:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Switch "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Switch "{self.name}" is not known.'))
 
 
 class Config(LexicalNode):
@@ -70,7 +70,7 @@ class Config(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Config:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Config "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Config "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.value]:
         #    self.logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
@@ -84,14 +84,14 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Value:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Value "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Value "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.parent.value][self.parent.value]:
         #    self.logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
 class AsfxParser(SwbfTextParser):
-    filetype = 'asfx'
+    extension = 'asfx'
 
     class Switch(Enum):
         Resample = 'resample'

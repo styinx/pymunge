@@ -5,7 +5,7 @@ import re
 from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
+from app.environment import MungeEnvironment as ENV
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
@@ -45,7 +45,7 @@ class Block(LexicalNode):
         self.type: str = ''
 
         if self.header not in ReqParser.Header:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block header "{self.header}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Type(LexicalNode):
@@ -56,7 +56,7 @@ class Type(LexicalNode):
         self.type: str = self.raw().strip()
 
         if self.type not in ReqParser.Type:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block type "{self.type}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block type "{self.type}" is not known.'))
 
 
 class Property(LexicalNode):
@@ -71,7 +71,7 @@ class Property(LexicalNode):
         self.value: str = match.group(2)
 
         if self.key not in ReqParser.Property:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block property "{self.key}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block property "{self.key}" is not known.'))
 
 
 class Value(LexicalNode, Dependency):
@@ -97,7 +97,7 @@ class Value(LexicalNode, Dependency):
 
 
 class ReqParser(SwbfTextParser):
-    filetype = 'req'
+    extension = 'req'
 
     class Header(Enum):
         Reqn = 'REQN'

@@ -6,9 +6,9 @@ import sys
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
+from app.environment import MungeEnvironment as ENV
 from swbf.parsers.parser import SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.logging import get_logger
 from util.enum import Enum
 
@@ -25,7 +25,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Switch:
-            MungeEnvironment.Diagnostic.report(OptWarning(f'Switch "{self.value}" is not known.'))
+            ENV.Diag.report(OptWarning(f'Switch "{self.value}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -37,25 +37,25 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Value and not re.match(Value.RE_NUMBER, self.value):
-            MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not known.'))
+            ENV.Diag.report(OptWarning(f'Value "{self.value}" is not known.'))
 
         if isinstance(self.parent, Switch):
             valid_values = OptionParser.SwitchValue[self.parent.value]
 
             if isinstance(valid_values, list):
                 if self.value not in valid_values:
-                    MungeEnvironment.Diagnostic.report(
+                    ENV.Diag.report(
                         OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
                     )
             else:
                 if not re.match(OptionParser.SwitchValue[self.parent.value], self.value):
-                    MungeEnvironment.Diagnostic.report(
+                    ENV.Diag.report(
                         OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
                     )
 
 
 class OptionParser(SwbfTextParser):
-    filetype = 'option'
+    extension = 'option'
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
