@@ -1,26 +1,28 @@
 from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
-from swbf.builders.builder import UcfbNode, int32_data, string_data
+from swbf.builders.builder import UcfbNode, int32_data, string_data, float32_array_data
 from swbf.builders.builder import StringProperty, BinaryProperty
 from swbf.builders.builder import Magic, SwbfUcfbBuilder
 from swbf.parsers.msh import MshParser, MshChunk
-from swbf.parsers.msh import Header, Mesh, SceneInformation, Model, ModelType, Name, FlagsModel, ParentModel
+from swbf.parsers.msh import Header, Mesh, SceneInformation, Model, ModelType, Name, FlagsModel, ParentModel, TransformModel
 from util.diagnostic import ErrorMessage
 
 
 class ModelBuilderError(ErrorMessage):
-    scope = 'MSH'
+    TOPIC = 'MSH'
 
 
 class MissingMshChunk(ModelBuilderError):
     def __init__(self, node: type[MshChunk], filepath: Path):
-        super().__init__(f'Missing MSH Chunk "{node.type}" in file {filepath}')
+        super().__init__(f'Missing MSH Chunk "{node.TYPE}" in file {filepath}')
 
 
 class ModelChunk:
     INFO = 'INFO'
     NAME = 'NAME'
+    PRNT = 'PRNT'
+    XFRM = 'XFRM'
 
 
 class ModelInfoProperty(UcfbNode):
@@ -64,10 +66,15 @@ class ModelBuilder(SwbfUcfbBuilder):
         for scene_information in mesh.find_all(SceneInformation):
             pass
 
-        exporting_models = []
+        model_names = {}
+        model_parents = []
+        model_transforms = bytearray()
+
         for model in mesh.find_all(Model):
             model_name = model.find(Name)
             model_type = model.find(ModelType)
+            model_parent = model.find(ParentModel)
+            model_transform = model.find(TransformModel)
 
             if not model_name:
                 ENV.Diag.report(MissingMshChunk(Name, self.tree.filepath))
@@ -79,14 +86,39 @@ class ModelBuilder(SwbfUcfbBuilder):
                     and model_name.name.find('_lowrez') == -1 \
                     and model_type.model_type != ModelType.ShadowVolume:
 
-                    exporting_models.append(model_name.name.replace('\0', ''))
+                    model_names[model_name.name.rstrip('\0')] = model
 
-        info_property = ModelInfoProperty(ModelChunk.INFO, self.tree.filepath.stem, len(exporting_models))
+                    if model_parent:
+                        model_parents.append(model_parent.name.rstrip('\0'))
+                    else:
+                        model_parents.append('')
+
+                    if model_transform:
+                        print(model_name.name)
+                        print(model_transform.dump(properties=True))
+                        import glm
+
+                        # Quaternion: x, y, z, w
+                        q = glm.quat(*[0.0 if x == -0.0 else x for x in model_transform.rotation])  # glm uses w-first order
+
+                        # Get 3x3 matrix
+                        rotation_matrix = glm.mat3_cast(q)
+                        model_transforms += rotation_matrix.to_bytes()
+                        model_transforms += float32_array_data(model_transform.translation)
+
+        info_property = ModelInfoProperty(ModelChunk.INFO, self.tree.filepath.stem, len(model_names))
         self.add(info_property)
 
-        model_names = '\0'.join(exporting_models)
-        print(model_names)
+        model_names = '\0'.join(model_names.keys())
         name_property = StringProperty(ModelChunk.NAME, model_names)
         self.add(name_property)
+
+        model_parents = '\0'.join(model_parents)
+        parent_property = StringProperty(ModelChunk.PRNT, model_parents)
+        self.add(parent_property)
+
+        model_transforms = model_transforms
+        transform_property = BinaryProperty(ModelChunk.XFRM, model_transforms)
+        self.add(transform_property)
 
         return self

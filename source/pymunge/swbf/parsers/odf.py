@@ -14,7 +14,17 @@ from util.logging import get_logger
 
 
 class OdfParserWarning(WarningMessage):
-    scope = 'ODF'
+    TOPIC = 'ODF'
+
+
+class UnknownKey(OdfParserWarning):
+    def __init__(self, key: str):
+        super().__init__(f'Key name "{key}" is not known.')
+
+
+class UnknownSection(OdfParserWarning):
+    def __init__(self, section: str):
+        super().__init__(f'Section name "{section}" is not known.')
 
 
 class OdfNode(LexicalNode):
@@ -38,7 +48,7 @@ class Key(OdfNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            ENV.Diag.report(OdfParserWarning(f'Key name "{self.name}" is not known.'))
+            ENV.Diag.report(UnknownKey(self.name))
 
 
 class Value(OdfNode):
@@ -73,7 +83,7 @@ class Section(OdfNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            ENV.Diag.report(OdfParserWarning(f'Section name "{self.name}" is not known.'))
+            ENV.Diag.report(UnknownSection(self.name))
 
 
 class OdfParser(SwbfTextParser):

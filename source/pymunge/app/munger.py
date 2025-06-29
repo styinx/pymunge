@@ -3,7 +3,6 @@ from multiprocessing import cpu_count as CPUS, Process, Queue
 from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
-from app.statistic import Statistic
 from app.ui import gui
 from swbf.parsers.odf import OdfParser
 from swbf.parsers.msh import MshParser

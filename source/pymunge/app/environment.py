@@ -2,9 +2,9 @@ from pathlib import Path
 import pickle
 
 from app.registry import FileRegistry
-from app.statistic import Statistic
 from util.diagnostic import Diagnostic
 from util.logging import get_logger, ScopedLogger
+from util.statistic import Statistic
 
 
 class MungeEnvironment:

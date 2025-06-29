@@ -22,8 +22,7 @@ class Statistic:
         return result
 
     def details(self):
-        for tag, keys in self.times.items():
-            times = self.times[tag]
+        for tag, times in self.times.items():
             key_len = max(map(len, times.keys()))
             time_len = max(map(lambda x: len(duration(x, True)), times.values()))
 

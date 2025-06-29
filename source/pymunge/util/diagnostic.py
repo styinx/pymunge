@@ -22,12 +22,14 @@ class DiagnosticMessageMeta(type):
     """
 
     Codes = {Severity.Error: 0, Severity.Warning: 0, Severity.Info: 0}
+    Names = []
 
     def __new__(cls, name, bases, dct):
-        severity = dct.get('severity', Severity.Error)
+        severity = dct.get('SEVERITY', Severity.Error)
         DiagnosticMessageMeta.Codes[severity] += 1
-        dct['code'] = DiagnosticMessageMeta.Codes[severity]
-        dct['name'] = cls.__name__
+        DiagnosticMessageMeta.Names.append(name)
+        dct['CODE'] = DiagnosticMessageMeta.Codes[severity]
+        dct['NAME'] = name
 
         return super().__new__(cls, name, bases, dct)
 
@@ -35,36 +37,47 @@ class DiagnosticMessageMeta(type):
 class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
     """
     The :class:`DiagnosticMessage` records an issue that occurred during the munge process.
-    The :attr:`scope` determines the module or topic in which the issue occurred.
-    The :attr:`scope` should be set during the definition of the diagnostic message
+    The :attr:`TOPIC` determines the module or topic in which the issue occurred.
+    The :attr:`SCOPE` should be set during the definition of the diagnostic message
     and contain a 3 character wide unique identifier.
     """
 
-    scope = '   '
-    severity = Severity.Info
-    code = 0
+    TOPIC = '   '
+    SEVERITY = Severity.Info
+    CODE = 0
+    NAME = ''
 
     def __init__(self, text: str | None = None):
-        self.code = self.__class__.code
-        self.scope = self.__class__.scope
-        self.severity: str = self.__class__.severity
         self.text: str | None = text
 
     def print(self):
-        code_digits = round(log10(DiagnosticMessageMeta.Codes[self.severity])) + 1
-        print(f'{self.scope}-{self.severity}-{self.code:0{code_digits}}: {self.text}')
+        code_digits = round(log10(max(0.1, max(DiagnosticMessageMeta.Codes.values()))))
+        name_length = len(max(DiagnosticMessageMeta.Names, key=lambda x: len(x)))
+        code = self.__class__.CODE
+        name = self.__class__.NAME
+        severity = self.__class__.SEVERITY
+        topic = self.__class__.TOPIC
+
+        message = f'[{topic}-{severity}-{code:0{code_digits}}] {name:{name_length}}: {self.text}'
+        if severity == Severity.Info:
+            print(Ansi.color_fg(Ansi.CyanForeground, message))
+        elif severity == Severity.Warning:
+            print(Ansi.color_fg(Ansi.YellowForeground, message))
+        elif severity == Severity.Error:
+            print(Ansi.color_fg(Ansi.RedForeground, message))
+
 
 
 class ErrorMessage(DiagnosticMessage):
-    severity = Severity.Error
+    SEVERITY = Severity.Error
 
 
 class WarningMessage(DiagnosticMessage):
-    severity = Severity.Warning
+    SEVERITY = Severity.Warning
 
 
 class InfoMessage(DiagnosticMessage):
-    severity = Severity.Info
+    SEVERITY = Severity.Info
 
 
 class Diagnostic:
@@ -82,16 +95,17 @@ class Diagnostic:
 
     def report(self, message: DiagnosticMessage):
         self.messages.append(message)
-        self.severeties[message.severity] += 1
+        self.severeties[message.SEVERITY] += 1
 
-        if message.severity == Severity.Error:
+        if message.SEVERITY == Severity.Error:
             self.logger.error(message.text)
-        elif message.severity == Severity.Warning:
+        elif message.SEVERITY == Severity.Warning:
             self.logger.warning(message.text)
-        elif message.severity == Severity.Info:
+        elif message.SEVERITY == Severity.Info:
             self.logger.info(message.text)
 
     def details(self):
+        print(Ansi.color_fg(Ansi.GreenForeground, '\nDiagnostic Details: \n'))
         for m in self.messages:
             m.print()
 

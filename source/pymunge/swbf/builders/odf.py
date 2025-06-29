@@ -10,11 +10,11 @@ from util.diagnostic import ErrorMessage, WarningMessage
 
 
 class ClassBuilderError(ErrorMessage):
-    scope = 'ODF'
+    TOPIC = 'ODF'
 
 
 class ClassBuilderWarning(WarningMessage):
-    scope = 'ODF'
+    TOPIC = 'ODF'
 
 
 class InconsistentSections(ClassBuilderError):
