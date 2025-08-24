@@ -200,9 +200,7 @@ class AsfxParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                self.self.logger.warning(
-                    f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".'
-                )
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
                 # self.error(TK.Null)
 
@@ -210,22 +208,4 @@ class AsfxParser(SwbfTextParser):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            asfx = AsfxParser.read(filepath=path)
-            print(asfx.dump())
-        else:
-            for file in path.rglob('*.asfx'):
-                try:
-                    asfx = AsfxParser.read(filepath=file)
-                except Lexer.EmptyStreamException:
-                    pass
-
-    elif len(sys.argv) > 2:
-        asfx = AsfxParser.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    AsfxParser.cmd_helper()

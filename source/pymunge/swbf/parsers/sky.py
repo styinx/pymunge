@@ -6,6 +6,7 @@ from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
 from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.cfg import CfgParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
@@ -14,41 +15,7 @@ from util.logging import get_logger
 class SkyWarning(WarningMessage):
     scope = 'SKY'
 
-
-class Comment(LexicalNode):
-
-    def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
-
-        self.text: str = self.raw().strip()
-
-
-class Block(LexicalNode):
-
-    def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
-
-        self.header: str = self.raw().replace('(', '').replace(')', '').strip()
-
-        if self.header not in SkyParser.Header:
-            ENV.Diag.report(SkyWarning(f'Block header "{self.header}" is not known.'))
-
-
-class Function(LexicalNode):
-
-    def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
-
-        function = self.raw().strip().replace(')', '').replace('(', ',').split(',')
-
-        self.name: str = function[0]
-        self.arguments: list[str] = function[1:]
-
-        if self.name not in SkyParser.Function:
-            ENV.Diag.report(SkyWarning(f'Function name "{self.name}" is not known.'))
-
-
-class SkyParser(SwbfTextParser):
+class SkyParser(CfgParser):
     extension = 'sky'
 
     class Header(Enum):
@@ -104,70 +71,6 @@ class SkyParser(SwbfTextParser):
 
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
-
-    def parse_format(self):
-        while self:
-            if self.get().type in TK.Whitespaces:
-                self.discard()  # Discard whitespaces
-
-            # Comment
-            elif self.get().type == TK.Minus:
-                self.consume_strict(TK.Minus)
-
-                self.consume_until(TK.LineFeed)
-
-                comment = Comment(self.collect_tokens())
-                self.add_to_scope(comment)
-
-                self.discard()  # \n
-
-            # Comment
-            elif self.get().type == TK.Slash:
-                self.consume_strict(TK.Slash)
-
-                self.consume_until(TK.LineFeed)
-
-                comment = Comment(self.collect_tokens())
-                self.add_to_scope(comment)
-
-                self.discard()  # \n
-
-            # Begin Block
-            elif self.get().type == TK.CurlyBracketOpen:
-                self.discard()  # {
-
-            # End Block
-            elif self.get().type == TK.CurlyBracketClose:
-                self.discard()  # }
-
-                self.exit_scope()
-
-            # Header or Function
-            elif self.get().type == TK.Word:
-
-                # We assume that the self format can't have nested blocks.
-
-                if isinstance(self.scope, SkyParser):
-                    self.consume_until(TK.ParanthesisClose)
-                    self.next()
-
-                    block = Block(self.collect_tokens())
-                    self.enter_scope(block)
-
-                else:
-                    self.consume_until(TK.Semicolon)
-                    self.next()
-
-                    function = Function(self.collect_tokens())
-                    self.add_to_scope(function)
-
-            # Either skip or throw error
-            else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
-                self.discard()
-                # self.error(TK.Null)
-
-        return self
 
 
 if __name__ == '__main__':

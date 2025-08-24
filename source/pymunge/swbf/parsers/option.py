@@ -159,7 +159,7 @@ class OptionParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
                 # self.error(TK.Null)
 
@@ -167,19 +167,4 @@ class OptionParser(SwbfTextParser):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            opt = OptionParser.read(filepath=path)
-            print(opt.dump())
-        else:
-            for file in path.rglob('*.option'):
-                opt = OptionParser.read(filepath=file)
-
-    elif len(sys.argv) > 2:
-        opt = OptionParser.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    OptionParser.cmd_helper()

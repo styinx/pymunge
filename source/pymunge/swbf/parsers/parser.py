@@ -38,7 +38,7 @@ class SwbfParser:
                 if path.is_file():
                     parser = cls(filepath=path)
                     parser.parse()
-                    print(parser.dump())
+                    print(parser.dump(recursive=True))
 
                 elif path.is_dir():
                     for file in path.rglob(f'*.{cls.extension}'):
@@ -62,10 +62,15 @@ class SwbfParser:
 
 class SwbfTextParser(Document, TextParser, SwbfParser):
 
+    class UnexpectedToken(ErrorMessage):
+
+        def __init__(self, parser: TextParser, received: str, expected: str):
+            super().__init__(f'Unexpected token at position {parser.token_position()}: Got "{received}", expected "{expected}"')
+
     class UnrecognizedToken(ErrorMessage):
 
-        def __init__(self, received: str, expected: str):
-            super().__init__(f'Unexpected token {received}, expected {expected}')
+        def __init__(self, parser: TextParser):
+            super().__init__(f'Unrecognized token at position {parser.token_position()}: "{parser.get()} ({parser.get().type}) ({parser.tokens()})".')
 
     def __init__(self, filepath: Path, tokens: list[Token] | None = None, logger: ScopedLogger = get_logger(__name__)):
 

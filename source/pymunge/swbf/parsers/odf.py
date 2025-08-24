@@ -1193,7 +1193,7 @@ class OdfParser(SwbfTextParser):
 
             # Either skip or throw error
             else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
                 # self.error(TK.Null)
 

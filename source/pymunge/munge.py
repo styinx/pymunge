@@ -58,10 +58,9 @@ def create_parser():
 
     munge_parsers = munge.add_subparsers(dest='tool')
 
+    configmunge = munge_parsers.add_parser(Munger.Tool.ConfigMunge)
     modelmunge = munge_parsers.add_parser(Munger.Tool.ModelMunge)
-
     odfmunge = munge_parsers.add_parser(Munger.Tool.OdfMunge)
-
     scriptmunge = munge_parsers.add_parser(Munger.Tool.ScriptMunge)
 
     return parser

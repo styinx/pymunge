@@ -4,9 +4,12 @@ from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
 from app.ui import gui
-from swbf.parsers.odf import OdfParser
+from swbf.parsers.cfg import CfgParser
+from swbf.parsers.fx import FxParser
 from swbf.parsers.msh import MshParser
+from swbf.parsers.odf import OdfParser
 from swbf.parsers.req import ReqParser
+from swbf.parsers.sky import SkyParser
 from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
@@ -63,7 +66,9 @@ class Munger:
             self.target.mkdir(parents=True)
 
         if args.munge.tool:
-            if args.munge.tool == Munger.Tool.ModelMunge:
+            if args.munge.tool == Munger.Tool.ConfigMunge:
+                self.source_filter = 'cfg'
+            elif args.munge.tool == Munger.Tool.ModelMunge:
                 self.source_filter = 'msh'
             elif args.munge.tool == Munger.Tool.OdfMunge:
                 self.source_filter = 'odf'
@@ -89,9 +94,12 @@ class Munger:
 
     def munge(self):
         parsers = {
+            'cfg': CfgParser,
+            'fx': FxParser,
             'msh': MshParser,
             'odf': OdfParser,
             'req': ReqParser,
+            'sky': SkyParser,
         }
         builders = {
             'msh': ModelBuilder,

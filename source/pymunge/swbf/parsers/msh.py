@@ -916,6 +916,3 @@ class MshParser(SwbfBinaryParser):
 
 if __name__ == '__main__':
     MshParser.cmd_helper()
-
-    # TODO: Global exit code
-    sys.exit(0)
