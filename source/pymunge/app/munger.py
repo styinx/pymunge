@@ -14,6 +14,7 @@ from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
 from util.enum import Enum
+from util.diagnostic import ErrorMessage
 
 
 class Munger:
@@ -40,12 +41,13 @@ class Munger:
         ConfigMunge = 'ConfigMunge'
         LevelPack = 'LevelPack'
         LocalizeMunge = 'LocalizeMunge'
-        OdfMunge = 'OdfMunge'
         ModelMunge = 'ModelMunge'
         MovieMunge = 'MovieMunge'
+        OdfMunge = 'OdfMunge'
         PathMunge = 'PathMunge'
         PathPlanningMunge = 'PathPlanningMunge'
         ScriptMunge = 'ScriptMunge'
+        SoundFLMunge = 'SoundFLMunge'
         TerrainMunge = 'TerrainMunge'
         TextureMunge = 'TextureMunge'
         WorldMunge = 'WorldMunge'
@@ -58,7 +60,7 @@ class Munger:
     def __init__(self, args: Namespace):
         self.source: Path = args.munge.source
         self.target: Path = args.munge.target / '_munged'
-        self.source_filter: str = 'req'
+        self.source_filters: list[str] = ['req']
         self.processes: list[Process] = []
         self.ui: Process = Process(target=gui)
 
@@ -66,14 +68,23 @@ class Munger:
             self.target.mkdir(parents=True)
 
         if args.munge.tool:
-            if args.munge.tool == Munger.Tool.ConfigMunge:
-                self.source_filter = 'cfg'
-            elif args.munge.tool == Munger.Tool.ModelMunge:
-                self.source_filter = 'msh'
-            elif args.munge.tool == Munger.Tool.OdfMunge:
-                self.source_filter = 'odf'
-            elif args.munge.tool == Munger.Tool.ScriptMunge:
-                self.source_filter = 'lua'
+            tool_filters = {
+                Munger.Tool.BinMunge: ['zaa', 'zaf'],
+                Munger.Tool.ConfigMunge: ['cfg', 'ffx', 'fx', 'mcfg', 'mus', 'sky', 'snd', 'tsr'],
+                Munger.Tool.LevelPack: ['req'],
+                Munger.Tool.LocalizeMunge: ['cfg'],
+                Munger.Tool.ModelMunge: ['msh'],
+                Munger.Tool.MovieMunge: ['mlst'],
+                Munger.Tool.OdfMunge: ['odf'],
+                Munger.Tool.PathMunge: ['pth'],
+                Munger.Tool.PathPlanningMunge: ['pln'],
+                Munger.Tool.ScriptMunge: ['lua'],
+                Munger.Tool.SoundFLMunge: ['asfx', 'sfx', 'st4', 'stm'],
+                Munger.Tool.TerrainMunge: ['ter'],
+                Munger.Tool.TextureMunge: ['tga', 'pic'],
+                Munger.Tool.WorldMunge: ['wld'],
+            }
+            self.source_filters = tool_filters.get(args.munge.tool, ['req'])
 
     def setup(self):
         self.processes = [Process(target=self.worker)] * (CPUS() - 1)
@@ -108,13 +119,22 @@ class Munger:
         }
 
         def build_file(file: Path):
-            parser_type = parsers.get(self.source_filter, ReqParser)
-            builder_type = builders.get(self.source_filter, Ucfb)
+            ext = file.suffix[1:]
 
+            if ext not in parsers:
+                ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for parsing'))
+                return
+
+            parser_type = parsers[ext]
             parser = parser_type(filepath=file, logger=ENV.Log)
             tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
             ENV.Reg.add_source_file(parser.filepath)
 
+            if ext not in builders:
+                ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for building'))
+                return
+
+            builder_type = builders[ext]
             builder = builder_type(tree)
             build_file_name = parser.filepath.name + f'.{builder.extension}'
             build_file = self.target / build_file_name
@@ -135,7 +155,8 @@ class Munger:
 
         else:
             ENV.Log.info(f'Processing "{self.source}"')
-            for entry in self.source.rglob(f'*.{self.source_filter}'):
-                build_file(entry)
+            for source_filter in self.source_filters:
+                for entry in self.source.rglob(f'*.{source_filter}'):
+                    build_file(entry)
             ENV.Log.info(f'Results written to "{self.target}"')
 

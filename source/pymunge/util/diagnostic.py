@@ -50,21 +50,22 @@ class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
     def __init__(self, text: str | None = None):
         self.text: str | None = text
 
-    def print(self):
+    def __str__(self):
         code_digits = round(log10(max(0.1, max(DiagnosticMessageMeta.Codes.values()))))
         name_length = len(max(DiagnosticMessageMeta.Names, key=lambda x: len(x)))
         code = self.__class__.CODE
         name = self.__class__.NAME
         severity = self.__class__.SEVERITY
         topic = self.__class__.TOPIC
+        triplet = f'{topic}-{severity}-{code:0{code_digits}}'
 
-        message = f'[{topic}-{severity}-{code:0{code_digits}}] {name:{name_length}}: {self.text}'
+        message = f'[{triplet}] {name:{name_length}}: {self.text}'
         if severity == Severity.Info:
-            print(Ansi.color_fg(Ansi.CyanForeground, message))
+            return Ansi.color_fg(Ansi.CyanForeground, message)
         elif severity == Severity.Warning:
-            print(Ansi.color_fg(Ansi.YellowForeground, message))
+            return Ansi.color_fg(Ansi.YellowForeground, message)
         elif severity == Severity.Error:
-            print(Ansi.color_fg(Ansi.RedForeground, message))
+            return Ansi.color_fg(Ansi.RedForeground, message)
 
 
 
@@ -98,16 +99,16 @@ class Diagnostic:
         self.severeties[message.SEVERITY] += 1
 
         if message.SEVERITY == Severity.Error:
-            self.logger.error(message.text)
+            self.logger.error(str(message))
         elif message.SEVERITY == Severity.Warning:
-            self.logger.warning(message.text)
+            self.logger.warning(str(message))
         elif message.SEVERITY == Severity.Info:
-            self.logger.info(message.text)
+            self.logger.info(str(message))
 
     def details(self):
         print(Ansi.color_fg(Ansi.GreenForeground, '\nDiagnostic Details: \n'))
         for m in self.messages:
-            m.print()
+            print(m)
 
     def summary(self):
         s = Ansi.color_fg(Ansi.GreenForeground, '\nDiagnostic Summary: \n')

@@ -13,21 +13,12 @@ from util.logging import get_logger
 
 
 class SkyWarning(WarningMessage):
-    scope = 'SKY'
+    TOPIC = 'SKY'
 
 class SkyParser(CfgParser):
     extension = 'sky'
 
-    class Header(Enum):
-        FlatInfo = 'FlatInfo'
-        DomeInfo = 'DomeInfo'
-        DomeModel = 'DomeModel'
-        LowResTerrain = 'LowResTerrain'
-        SkyInfo = 'SkyInfo'
-        SkyObject = 'SkyObject'
-        SunInfo = 'SunInfo'
-
-    class Function(Enum):
+    class Call(Enum):
         Ambient = 'Ambient'
         AmbientColor = 'AmbientColor'
         Angle = 'Angle'
@@ -40,9 +31,12 @@ class SkyParser(CfgParser):
         Degree = 'Degree'
         DetailTexture = 'DetailTexture'
         DetailTextureScale = 'DetailTextureScale'
+        DomeInfo = 'DomeInfo'
+        DomeModel = 'DomeModel'
         Enable = 'Enable'
         FarSceneRange = 'FarSceneRange'
         Filter = 'Filter'
+        FlatInfo = 'FlatInfo'
         FogColor = 'FogColor'
         FogFar = 'FogFar'
         FogNear = 'FogNear'
@@ -51,6 +45,7 @@ class SkyParser(CfgParser):
         Geometry = 'Geometry'
         Height = 'Height'
         Intensity = 'Intensity'
+        LowResTerrain = 'LowResTerrain'
         MaxDistance = 'MaxDistance'
         Modulate = 'Modulate'
         MovementScale = 'MovementScale'
@@ -59,9 +54,13 @@ class SkyParser(CfgParser):
         Offset = 'Offset'
         PatchResolution = 'PatchResolution'
         ShadowColor = 'ShadowColor'
+        SkyInfo = 'SkyInfo'
+        SkyObject = 'SkyObject'
         Softness = 'Softness'
         SoftnessParam = 'SoftnessParam'
+        SunInfo = 'SunInfo'
         TerrainColorDarkening = 'TerrainColorDarkening'
+        TerrainEnable = 'TerrainEnable'
         Texture = 'Texture'
         TextureSpeed = 'TextureSpeed'
         Threshold = 'Threshold'
@@ -71,6 +70,8 @@ class SkyParser(CfgParser):
 
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
+
+        CfgParser.Call = SkyParser.Call
 
 
 if __name__ == '__main__':

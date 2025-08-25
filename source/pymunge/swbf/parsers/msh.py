@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 
 from parxel.nodes import Node, BinaryNode
 from parxel.parser import BinaryParser

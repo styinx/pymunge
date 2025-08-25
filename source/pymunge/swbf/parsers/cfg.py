@@ -1,8 +1,6 @@
 from logging import Logger
 from pathlib import Path
-import sys
 
-from parxel.lexer import Lexer
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
@@ -10,12 +8,12 @@ from app.environment import MungeEnvironment as ENV
 from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
-from util.logging import get_logger
 from util.enum import Enum
+from util.logging import get_logger
 
 
-class ConfigWarning(WarningMessage):
-    scope = 'CFG'
+class CfgWarning(WarningMessage):
+    TOPIC = 'CFG'
 
 
 class Call(LexicalNode):
@@ -25,6 +23,9 @@ class Call(LexicalNode):
 
         self.name: str = self.raw().strip()
         self.is_block: bool = False
+
+        if self.name not in CfgParser.Call:
+            ENV.Diag.report(CfgWarning(f'Call "{self.name}" is not known.'))
 
 
 class Comment(LexicalNode):
@@ -53,6 +54,41 @@ class Number(LexicalNode):
 
 class CfgParser(SwbfTextParser):
     extension = 'cfg'
+
+    class Call(Enum):
+        AmbientColor = 'AmbientColor'
+        AnimatedTextures = 'AnimatedTextures'
+        Backdrop = 'Backdrop'
+        BarSound = 'BarSound'
+        BarSoundInterval = 'BarSoundInterval'
+        DataBase = 'DataBase'
+        LoadDisplay = 'LoadDisplay'
+        LogoTexture = 'LogoTexture'
+        LEDTextures = 'LEDTextures'
+        NoiseTextures = 'NoiseTextures'
+        PC = 'PC'
+        PlanetBackdrops = 'PlanetBackdrops'
+        PlanetInfo = 'PlanetInfo'
+        PlanetLevel = 'PlanetLevel'
+        PS2 = 'PS2'
+        RotatingDisk = 'RotatingDisk'
+        ScanLineTexture = 'ScanLineTexture'
+        Size = 'Size'
+        SunColor = 'SunColor'
+        SunDirection = 'SunDirection'
+        TargetTime = 'TargetTime'
+        TitleBarTextures = 'TitleBarTextures'
+        TeamModel = 'TeamModel'
+        TransitionSound = 'TransitionSound'
+        Value = 'Value'
+        VarBinary = 'VarBinary'
+        VarScope = 'VarScope'
+        World = 'World'
+        XBOX = 'XBOX'
+        XTrackingSound = 'XTrackingSound'
+        YTrackingSound = 'YTrackingSound'
+        ZoomSound = 'ZoomSound'
+        ZoomSelectorTextures = 'ZoomSelectorTextures'
 
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)

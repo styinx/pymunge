@@ -1,7 +1,6 @@
 from logging import Logger
 from pathlib import Path
 import re
-import sys
 
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
@@ -14,7 +13,7 @@ from util.enum import Enum
 
 
 class OptWarning(WarningMessage):
-    scope = 'OPT'
+    TOPIC = 'OPT'
 
 
 class Switch(LexicalNode):

@@ -848,7 +848,7 @@ class OdfParser(SwbfTextParser):
         SkinnyFactor = 'SkinnyFactor'
         SmallBan = 'SmallBan'
         SmashParkedFlyers = 'SmashParkedFlyers'
-        SniperScope = 'SniperScope'
+        SniperTOPIC = 'SniperScope'
         SoldierAmmo = 'SoldierAmmo'
         SoldierAnimation = 'SoldierAnimation'
         SoldierBan = 'SoldierBan'

@@ -1,8 +1,6 @@
 from logging import Logger
 from pathlib import Path
-import sys
 
-from parxel.lexer import Lexer
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
@@ -15,7 +13,7 @@ from util.enum import Enum
 
 
 class AsxWarning(WarningMessage):
-    scope = 'ASX'
+    TOPIC = 'ASX'
 
 
 class Comment(LexicalNode):

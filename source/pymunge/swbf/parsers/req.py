@@ -14,7 +14,7 @@ from util.logging import get_logger
 
 
 class ReqWarning(WarningMessage):
-    scope = 'REQ'
+    TOPIC = 'REQ'
 
 
 class Comment(LexicalNode):
