@@ -331,7 +331,7 @@ class BoundingBox(MshChunk, BinaryNode):
 
         self.rotation: list[float] = msh_stream.float32_array(4)
         self.center: list[float] = msh_stream.float32_array(3)
-        self.extension: list[float] = msh_stream.float32_array(3)
+        self.Extension: list[float] = msh_stream.float32_array(3)
         self.radius: float = msh_stream.float32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
@@ -659,7 +659,7 @@ class ShadowMesh(MshChunk, BinaryNode):
         self.num_vertices: int = msh_stream.int32()
         self.vertices: list[list[float]] = [msh_stream.float32_array(3) for _ in range(self.num_vertices)]
         self.num_edges: int = msh_stream.int32()
-        self.edges: list[list[int]] = [msh_stream.int16_array(4) for _ in range(self.num_vertices)]
+        self.edges: list[list[int]] = [msh_stream.int16_array(4) for _ in range(self.num_edges)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -731,13 +731,13 @@ class WeightBones(MshChunk, BinaryNode):
         MshChunk.__init__(self, msh_stream)
 
         self.num_weights : int = msh_stream.int32()
-        self.weights : list[tuple[int, float]] = [(msh_stream.int32(), msh_stream.float32()) for _ in range(self.num_weights)]
+        self.weights : list[tuple[int, float]] = [(msh_stream.int32(), msh_stream.float32()) for _ in range(self.num_weights * 4)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
 class MshParser(SwbfBinaryParser):
-    extension = 'msh'
+    Extension = 'msh'
 
     def __init__(self, filepath: Path, buffer: bytes = None, logger : ScopedLogger = get_logger(__name__)):
         SwbfBinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)

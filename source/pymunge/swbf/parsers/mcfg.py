@@ -13,7 +13,7 @@ class McfgWarning(WarningMessage):
     TOPIC = 'MCFG'
 
 class McfgParser(CfgParser):
-    extension = 'mcfg'
+    Extension = 'mcfg'
 
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)

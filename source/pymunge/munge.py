@@ -8,7 +8,7 @@ from app.environment import MungeEnvironment
 from app.munger import Munger
 from util.logging import LogLevel, get_logger
 from util.status import ExitCode
-from version import STRING as VERSION_STRING
+from version import INFO as VERSION_INFO
 from config import CONFIG, parse_config
 
 
@@ -67,6 +67,9 @@ def create_parser():
 
 
 def build_args(parser, args):
+    """
+    Build nested args namespace from subparsers.
+    """
     for action in parser._actions:
         if not isinstance(action, _SubParsersAction):
             continue
@@ -94,7 +97,7 @@ def main():
     build_args(parser, args)
 
     if args.version:
-        print(VERSION_STRING)
+        print(VERSION_INFO)
         return ExitCode.Success
 
     logger = get_logger('pymunge', path=Path(getcwd()), level=args.log_level, ansi_style=args.ansi_style)
@@ -106,7 +109,8 @@ def main():
 
     try:
 
-        environment = MungeEnvironment(logger)
+        environment = MungeEnvironment(args, logger)
+        environment.registry.load_dependencies()
 
         if args.run == 'munge':
             munger = Munger(args)
@@ -114,14 +118,15 @@ def main():
             munger.munge()
 
             if args.munge.cache:
-                environment.store(args.munge.cache)
+                environment.store_cache()
 
         elif args.run == 'cache':
-            environment.load(args.cache.file)
+            environment.load_cache()
 
         if args.log_level == LogLevel.Debug:
             environment.details()
 
+        environment.registry.store_dependencies()
         environment.summary()
 
     except Exception as e:

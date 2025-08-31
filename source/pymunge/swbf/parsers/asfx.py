@@ -5,7 +5,6 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.logging import get_logger
@@ -35,18 +34,15 @@ class Condition(LexicalNode):
         self.arguments: list[str] = condition[1:]
 
 
-class SoundEffect(LexicalNode, Dependency):
+class SoundEffect(LexicalNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
         values: list[str] = self.raw().strip().split(' ')
 
-        self.path: str = values[0]
+        self.filepath: str = values[0]
         self.name: str = '' if len(values) == 1 else values[1]
-
-        filepath = Path(self.path)
-        Dependency.__init__(self, filepath.resolve())
 
 
 class Switch(LexicalNode):
@@ -89,7 +85,7 @@ class Value(LexicalNode):
 
 
 class AsfxParser(SwbfTextParser):
-    extension = 'asfx'
+    Extension = 'asfx'
 
     class Switch(Enum):
         Resample = 'resample'
@@ -143,7 +139,7 @@ class AsfxParser(SwbfTextParser):
 
                 sfx = SoundEffect(self.collect_tokens())
                 self.enter_scope(sfx)
-                self.register_dependency(value)
+                ENV.Reg.add_dependency(self.filepath, sfx.filepath)
 
                 while self.get().type == TK.Minus:
                     self.discard()  # -

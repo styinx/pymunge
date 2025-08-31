@@ -13,7 +13,7 @@ class SndWarning(WarningMessage):
     TOPIC = 'SND'
 
 class SndParser(CfgParser):
-    extension = 'snd'
+    Extension = 'snd'
 
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)

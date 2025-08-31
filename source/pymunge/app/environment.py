@@ -1,4 +1,3 @@
-from pathlib import Path
 import pickle
 
 from app.registry import FileRegistry
@@ -19,10 +18,10 @@ class MungeEnvironment:
     Reg: FileRegistry = None
     Stat: Statistic = None
 
-    def __init__(self, logger: ScopedLogger = get_logger(__name__)):
+    def __init__(self, args, logger: ScopedLogger = get_logger(__name__)):
         self.logger: ScopedLogger = logger
         self.diagnostic: Diagnostic = Diagnostic(logger=logger)
-        self.registry: FileRegistry = FileRegistry()
+        self.registry: FileRegistry = FileRegistry(args, diagnostic=self.diagnostic, logger=logger)
         self.statistic: Statistic = Statistic()
 
         if not MungeEnvironment.Diag:
@@ -34,18 +33,21 @@ class MungeEnvironment:
         if not MungeEnvironment.Stat:
             MungeEnvironment.Stat = self.statistic
 
-    def store(self, file: Path):
+        if args.munge.cache:
+            self.cache_file = args.cache.file
+
+    def store_cache(self):
         pickle.dump({
             'diagnostic': self.diagnostic,
             'statistic': self.statistic,
-        }, file.open('wb+'))
+        }, self.cache_file.open('wb+'))
 
-        self.logger.info(f'Storing cache to file "{file}"')
+        self.logger.info(f'Storing cache to file "{self.cache_file}"')
 
-    def load(self, file: Path):
-        self.logger.info(f'Loading cache from file "{file}"')
+    def load_cache(self):
+        self.logger.info(f'Loading cache from file "{self.cache_file}"')
 
-        dump = pickle.load(file.open('rb'))
+        dump = pickle.load(self.cache_file.open('rb'))
 
         self.diagnostic = dump['diagnostic']
         self.statistic = dump['statistic']

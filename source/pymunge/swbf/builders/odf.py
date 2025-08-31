@@ -43,7 +43,7 @@ class ClassChunk:
 
 
 class ClassBuilder(SwbfUcfbBuilder):
-    extension = 'class'
+    Extension = 'class'
 
     def __init__(self, tree: OdfParser):
         class_section: Section = tree.find(Section)
@@ -92,7 +92,7 @@ class ClassBuilder(SwbfUcfbBuilder):
                         base_property = StringProperty(ClassChunk.BASE, class_label.raw_value())
                         self.add(base_property)
 
-                        name_property = StringProperty(ClassChunk.TYPE, self.tree.filepath.stem)  # ODF name without extension
+                        name_property = StringProperty(ClassChunk.TYPE, self.tree.filepath.stem)  # ODF name without Extension
                         self.add(name_property)
 
         # Write Properties section

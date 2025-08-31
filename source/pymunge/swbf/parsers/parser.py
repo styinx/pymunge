@@ -8,23 +8,21 @@ from parxel.parser import BinaryParser, TextParser
 from parxel.token import Token
 
 from app.environment import MungeEnvironment as ENV
-from app.registry import Dependency
 from util.diagnostic import ErrorMessage
 from util.logging import get_logger, ScopedLogger
 
 logger = get_logger(__name__)
 
 
-class SwbfParser:
-    extension = ''
+class SwbfParser(Document):
+    Extension = ''
 
-    def __init__(self, logger: ScopedLogger = get_logger(__name__)) -> None:
+    def __init__(self, filepath: Path, logger: ScopedLogger = get_logger(__name__)) -> None:
+        Document.__init__(self, filepath=filepath)
+
         self.logger: ScopedLogger = logger
 
-    def register_dependency(self, dependency: Dependency):
-        if dependency.filepath:
-            ENV.Reg.lookup['premunge'][dependency.filepath.name] = dependency
-            self.logger.debug(f'Add dependency: {dependency.filepath}')
+        ENV.Reg.register_file(self.filepath)
 
     @classmethod
     def cmd_helper(cls: type):
@@ -41,7 +39,7 @@ class SwbfParser:
                     print(parser.dump(recursive=True))
 
                 elif path.is_dir():
-                    for file in path.rglob(f'*.{cls.extension}'):
+                    for file in path.rglob(f'*.{cls.Extension}'):
                         print(file)
                         req = cls(filepath=file)
                         req.parse()
@@ -60,21 +58,23 @@ class SwbfParser:
         sys.exit(0)
 
 
-class SwbfTextParser(Document, TextParser, SwbfParser):
+class SwbfTextParser(TextParser, SwbfParser):
 
     class UnexpectedToken(ErrorMessage):
+        TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser, received: str, expected: str):
             super().__init__(f'Unexpected token at position {parser.token_position()}: Got "{received}", expected "{expected}"')
 
     class UnrecognizedToken(ErrorMessage):
+        TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser):
             super().__init__(f'Unrecognized token at position {parser.token_position()}: "{parser.get()} ({parser.get().type}) ({parser.tokens()})".')
 
     def __init__(self, filepath: Path, tokens: list[Token] | None = None, logger: ScopedLogger = get_logger(__name__)):
 
-        SwbfParser.__init__(self, logger=logger)
+        SwbfParser.__init__(self, filepath=filepath, logger=logger)
         Document.__init__(self, filepath=filepath)
         TextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 
@@ -82,13 +82,13 @@ class SwbfTextParser(Document, TextParser, SwbfParser):
         raise NotImplementedError('This is an abstract base class!')
 
 
-class SwbfBinaryParser(Document, BinaryParser, SwbfParser):
+class SwbfBinaryParser(BinaryParser, SwbfParser):
 
     def __init__(self, filepath: Path, buffer: bytes | None = None, logger: ScopedLogger = get_logger(__name__)):
 
-        SwbfParser.__init__(self, logger=logger)
+        SwbfParser.__init__(self, filepath=filepath, logger=logger)
         Document.__init__(self, filepath=filepath)
-        BinaryParser.__init__(self, buffer=buffer, filepath=filepath, logger=logger)
+        BinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)
 
     def parse_format(self):
         raise NotImplementedError('This is an abstract base class!')

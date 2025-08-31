@@ -54,7 +54,7 @@ class Value(LexicalNode):
 
 
 class OptionParser(SwbfTextParser):
-    extension = 'option'
+    Extension = 'option'
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'

@@ -6,25 +6,10 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
-
-
-class OdfParserWarning(WarningMessage):
-    TOPIC = 'ODF'
-
-
-class UnknownKey(OdfParserWarning):
-    def __init__(self, key: str):
-        super().__init__(f'Key name "{key}" is not known.')
-
-
-class UnknownSection(OdfParserWarning):
-    def __init__(self, section: str):
-        super().__init__(f'Section name "{section}" is not known.')
 
 
 class OdfNode(LexicalNode):
@@ -48,7 +33,7 @@ class Key(OdfNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            ENV.Diag.report(UnknownKey(self.name))
+            ENV.Diag.report(OdfParser.UnknownKey(self.name))
 
 
 class Value(OdfNode):
@@ -62,14 +47,13 @@ class Value(OdfNode):
         return self.value.replace('"', '')
 
 
-class Reference(Value, Dependency):
+class Reference(Value):
     RE_FILE = re.compile(r'"[_a-zA-Z]\w+\.\w+"')
 
-    def __init__(self, tokens: list[Token], parent: Node = None):
+    def __init__(self, basepath: Path, tokens: list[Token], parent: Node = None):
         Value.__init__(self, tokens, parent)
 
-        filepath = Path(self.raw())
-        Dependency.__init__(self, filepath.resolve())
+        self.filepath = basepath / self.raw()
 
     def raw_stem(self) -> str:
         return self.filepath.stem.replace('"', '')
@@ -83,11 +67,22 @@ class Section(OdfNode):
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            ENV.Diag.report(UnknownSection(self.name))
+            ENV.Diag.report(OdfParser.UnknownSection(self.name))
 
 
 class OdfParser(SwbfTextParser):
-    extension = 'odf'
+    Extension = 'odf'
+
+    class OdfDiagnosticMessage:
+        TOPIC = 'ODF'
+
+    class UnknownKey(OdfDiagnosticMessage, WarningMessage):
+        def __init__(self, key: str):
+            super().__init__(f'Key name "{key}" is not known.')
+
+    class UnknownSection(OdfDiagnosticMessage, WarningMessage):
+        def __init__(self, section: str):
+            super().__init__(f'Section name "{section}" is not known.')
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -1183,8 +1178,10 @@ class OdfParser(SwbfTextParser):
                 value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
 
                 if re.match(Reference.RE_FILE, value_text) is not None:
-                    reference = Reference(value_tokens)
+                    reference = Reference(self.filepath.parent, value_tokens)
                     key.add(reference)
+                    ENV.Reg.add_dependency(self.filepath, reference.filepath)
+
                 else:
                     value = Value(value_tokens)
                     key.add(value)

@@ -14,6 +14,11 @@ from pymunge.app.munger import Munger
 from pymunge.util.logging import LogLevel
 
 
+class Default:
+    CACHE_FILE = '.pymunge.cache'
+    GRAPH_FILE = '.pymunge.graph'
+
+
 CONFIG = Namespace(**{
     'ansi_style': False,
     'log_level': LogLevel.Debug,
@@ -36,7 +41,7 @@ CONFIG = Namespace(**{
     }),
 
     'cache': Namespace(**{
-        'file': Path(getcwd()) / 'pymunge.bin'
+        'file': Path(getcwd()) / Default.CACHE_FILE
     })
 })
 

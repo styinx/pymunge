@@ -14,7 +14,7 @@ class FxWarning(WarningMessage):
     TOPIC = 'FX'
 
 class FxParser(CfgParser):
-    extension = 'fx'
+    Extension = 'fx'
 
     class Call(Enum):
         Alpha = 'Alpha'

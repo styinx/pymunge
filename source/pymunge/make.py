@@ -22,7 +22,8 @@ VERSION_TEMPLATE = str(
     'HASH: str = \'{HASH:s}\'\n'
     'DATE: str = \'{DATE:s}\'\n'
     'BRANCH: str = \'{BRANCH:s}\'\n'
-    'NUMBER: tuple[int, int, int] = ({MAJOR}, {MINOR:d}, {PATCH:d})\n'
+    'TUPLE: tuple[int, int, int] = ({MAJOR}, {MINOR:d}, {PATCH:d})\n'
+    'INFO: str = \'{MAJOR:02d}.{MINOR:02d}.{PATCH:d}\'\n'
     'STRING: str = \'{MAJOR:02d}.{MINOR:02d}.{PATCH:06d}_{HASH:s}_{BRANCH:s}_{DATE:s}\'\n'
 )
 

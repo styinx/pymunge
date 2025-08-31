@@ -1,4 +1,4 @@
-from util.logging import Ansi
+from util.logging import Ansi, ScopedLogger, get_logger
 from util.time import measure, duration
 
 
@@ -8,7 +8,8 @@ class Statistic:
         Parse = 'Parse'
         Build = 'Build'
 
-    def __init__(self):
+    def __init__(self, logger: ScopedLogger = get_logger(__name__)):
+        self.logger = logger
         self.times = {}
 
     def record(self, tag: str, name: str, f: callable, *args, **kwargs):

@@ -152,7 +152,7 @@ class BinaryProperty(UcfbNode):
 
 
 class SwbfUcfbBuilder(UcfbNode):
-    extension = 'bin'
+    Extension = 'bin'
 
     def __init__(self, tree: Document, magic: str):
         UcfbNode.__init__(self)

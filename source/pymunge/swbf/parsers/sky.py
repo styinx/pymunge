@@ -16,7 +16,7 @@ class SkyWarning(WarningMessage):
     TOPIC = 'SKY'
 
 class SkyParser(CfgParser):
-    extension = 'sky'
+    Extension = 'sky'
 
     class Call(Enum):
         Ambient = 'Ambient'

@@ -37,13 +37,13 @@ pymunge -s ./your_files
 
 ### Build a single ODF file
 ```
-pymunge -s your_file.odf odfmunge
+pymunge -s your_file.odf OdfMunge
 ```
 
 
 ### Build a folder of ODF files
 ```
-pymunge -s ./your_files odfmunge
+pymunge -s ./your_files OdfMunge
 ```
 
 

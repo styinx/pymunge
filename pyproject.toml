@@ -35,7 +35,7 @@ classifiers     = [
 ]
 license         = { file="LICENSE" }
 dependencies    = [
-    "parxel~=0.0.5",
+    "parxel~=0.0.22",
     "windows-curses~=2.4.1; sys_platform == 'win32'"
 ]
 

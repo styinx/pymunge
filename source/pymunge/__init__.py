@@ -2,6 +2,6 @@
 pymunge
 """
 
-from .version import NUMBER as VERSION_NUMBER
+from .version import TUPLE as VERSION_TUPLE
 
-__VERSION__ = VERSION_NUMBER
+__VERSION__ = VERSION_TUPLE

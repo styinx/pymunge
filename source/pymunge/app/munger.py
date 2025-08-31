@@ -128,7 +128,7 @@ class Munger:
             parser_type = parsers[ext]
             parser = parser_type(filepath=file, logger=ENV.Log)
             tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
-            ENV.Reg.add_source_file(parser.filepath)
+            ENV.Reg.register_file(parser.filepath)
 
             if ext not in builders:
                 ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for building'))
@@ -136,7 +136,7 @@ class Munger:
 
             builder_type = builders[ext]
             builder = builder_type(tree)
-            build_file_name = parser.filepath.name + f'.{builder.extension}'
+            build_file_name = parser.filepath.name + f'.{builder.Extension}'
             build_file = self.target / build_file_name
             ENV.Stat.record('build', str(build_file), builder.build)
 
@@ -148,7 +148,7 @@ class Munger:
             with build_file.open('wb+') as f:
                 ENV.Log.debug(f'Writing "{build_file}"')
                 f.write(ucfb.data())
-                ENV.Reg.add_build_file(build_file)
+                ENV.Reg.register_file(build_file)
 
         if self.source.is_file():
             build_file(self.source)

@@ -6,7 +6,6 @@ from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from app.registry import Dependency
 from swbf.parsers.parser import SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
@@ -74,11 +73,10 @@ class Property(LexicalNode):
             ENV.Diag.report(ReqWarning(f'Block property "{self.key}" is not known.'))
 
 
-class Value(LexicalNode, Dependency):
+class Value(LexicalNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
-        Dependency.__init__(self, filepath=None)
 
         self.name: str = self.raw().strip()
 
@@ -97,7 +95,7 @@ class Value(LexicalNode, Dependency):
 
 
 class ReqParser(SwbfTextParser):
-    extension = 'req'
+    Extension = 'req'
 
     class Header(Enum):
         Reqn = 'REQN'
@@ -181,7 +179,7 @@ class ReqParser(SwbfTextParser):
                     else:
                         value = Value(self.collect_tokens(), type)
                         self.add_to_scope(value)
-                        self.register_dependency(value)
+                        ENV.Reg.add_dependency(self.filepath, value.filepath)
 
                 elif self.get().type == TK.EqualSign:
                     self.consume_until(TK.QuotationMark)

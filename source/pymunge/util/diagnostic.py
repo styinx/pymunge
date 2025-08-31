@@ -42,7 +42,7 @@ class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
     and contain a 3 character wide unique identifier.
     """
 
-    TOPIC = '   '
+    TOPIC = ''
     SEVERITY = Severity.Info
     CODE = 0
     NAME = ''
@@ -56,7 +56,7 @@ class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
         code = self.__class__.CODE
         name = self.__class__.NAME
         severity = self.__class__.SEVERITY
-        topic = self.__class__.TOPIC
+        topic = self.__class__.TOPIC or name[:3].upper()
         triplet = f'{topic}-{severity}-{code:0{code_digits}}'
 
         message = f'[{triplet}] {name:{name_length}}: {self.text}'
@@ -66,7 +66,6 @@ class DiagnosticMessage(metaclass=DiagnosticMessageMeta):
             return Ansi.color_fg(Ansi.YellowForeground, message)
         elif severity == Severity.Error:
             return Ansi.color_fg(Ansi.RedForeground, message)
-
 
 
 class ErrorMessage(DiagnosticMessage):
