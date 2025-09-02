@@ -6,7 +6,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.logging import get_logger
 from util.enum import Enum
@@ -54,7 +54,7 @@ class Value(LexicalNode):
 
 
 class OptionParser(SwbfTextParser):
-    Extension = 'option'
+    Extension = Ext.Option
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
@@ -156,11 +156,10 @@ class OptionParser(SwbfTextParser):
 
                 self.exit_scope()
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
                 ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 

@@ -6,6 +6,11 @@ from util.enum import Enum
 from swbf.parsers.req import ReqParser
 
 
+class Ext(Enum):
+    Class = 'class'
+    Model = 'model'
+
+
 class Magic(Enum):
     Arcs = 'ARCS'
     Barrier = 'BARR'
@@ -152,7 +157,7 @@ class BinaryProperty(UcfbNode):
 
 
 class SwbfUcfbBuilder(UcfbNode):
-    Extension = 'bin'
+    Extension = 'bin' # TODO
 
     def __init__(self, tree: Document, magic: str):
         UcfbNode.__init__(self)

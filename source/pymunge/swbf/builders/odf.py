@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
+from swbf.builders.builder import Ext
 from swbf.builders.builder import int32_data
 from swbf.builders.builder import StringProperty, BinaryProperty
 from swbf.builders.builder import Magic, SwbfUcfbBuilder
@@ -43,7 +44,7 @@ class ClassChunk:
 
 
 class ClassBuilder(SwbfUcfbBuilder):
-    Extension = 'class'
+    Extension = Ext.Class
 
     def __init__(self, tree: OdfParser):
         class_section: Section = tree.find(Section)

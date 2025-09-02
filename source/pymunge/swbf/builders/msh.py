@@ -3,6 +3,7 @@ from pathlib import Path
 from pyglm import glm
 
 from app.environment import MungeEnvironment as ENV
+from swbf.builders.builder import Ext
 from swbf.builders.builder import UcfbNode, int32_data, string_data, float32_array_data
 from swbf.builders.builder import StringProperty, BinaryProperty
 from swbf.builders.builder import Magic, SwbfUcfbBuilder
@@ -56,7 +57,7 @@ class ModelInfoProperty(UcfbNode):
 
 
 class ModelBuilder(SwbfUcfbBuilder):
-    Extension = 'model'
+    Extension = Ext.Model
 
     def __init__(self, tree: MshParser):
         SwbfUcfbBuilder.__init__(self, tree, Magic.Skeleton)

@@ -1,3 +1,4 @@
+from difflib import get_close_matches
 from logging import Logger
 from pathlib import Path
 import re
@@ -6,7 +7,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
@@ -70,19 +71,45 @@ class Section(OdfNode):
             ENV.Diag.report(OdfParser.UnknownSection(self.name))
 
 
+from difflib import SequenceMatcher
+
+def get_best_matches(word, desired, n=3, cutoff=0.8):
+    word_lower = word.lower()
+    scored = []
+
+    for candidate in desired:
+        ratio = SequenceMatcher(None, word_lower, candidate.lower()).ratio()
+        if ratio >= cutoff:
+            scored.append((ratio, candidate))
+
+    # sort by ratio (descending), then by name for stability
+    scored.sort(key=lambda x: (-x[0], x[1]))
+
+    return [candidate for _, candidate in scored[:n]]
+
+
+def suggest_option(needle: str, haystack: list):
+    matches = get_best_matches(needle, haystack)
+    if not matches:
+        return ''
+    filler = '' if len(matches) == 1 else 'one of '
+    suggestions = ', '.join(f'"{option}"' for option in matches)
+    return f'Did you mean {filler}{suggestions}?'
+
+
 class OdfParser(SwbfTextParser):
-    Extension = 'odf'
+    Extension = Ext.Odf
 
     class OdfDiagnosticMessage:
         TOPIC = 'ODF'
 
     class UnknownKey(OdfDiagnosticMessage, WarningMessage):
         def __init__(self, key: str):
-            super().__init__(f'Key name "{key}" is not known.')
+            super().__init__(f'Key name "{key}" is not known. {suggest_option(key, OdfParser.Key)}')
 
     class UnknownSection(OdfDiagnosticMessage, WarningMessage):
         def __init__(self, section: str):
-            super().__init__(f'Section name "{section}" is not known.')
+            super().__init__(f'Section name "{section}" is not known. {suggest_option(section, OdfParser.Section)}')
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -278,7 +305,6 @@ class OdfParser(SwbfTextParser):
         ClassHisDEF = 'ClassHisDEF'
         ClassImpATK = 'ClassImpATK'
         ClassImpDEF = 'ClassImpDEF'
-        ClassLabel_ = 'classLabel'  # TODO
         ClassLabel = 'ClassLabel'
         ClassLocATK = 'ClassLocATK'
         ClassLocDEF = 'ClassLocDEF'
@@ -294,7 +320,6 @@ class OdfParser(SwbfTextParser):
         CockpitChatterStream = 'CockpitChatterStream'
         CockpitTension = 'CockpitTension'
         CodeInitialWidth = 'CodeInitialWidth'
-        Collision_ = 'Collision'  # TODO
         Collision = 'COLLISION'
         CollisionInflict = 'CollisionInflict'
         CollisionLowResRootScale = 'CollisionLowResRootScale'
@@ -451,9 +476,7 @@ class OdfParser(SwbfTextParser):
         GeometryColorMax = 'GeometryColorMax'
         GeometryColorMin = 'GeometryColorMin'
         GeometryLowRes = 'GeometryLowRes'
-        GeometryName_ = 'geometryName'  # TODO
         GeometryName = 'GeometryName'
-        GeometryScale_ = 'geometryScale'  # TODO
         GeometryScale = 'GeometryScale'
         GlowLength = 'GlowLength'
         Gravity = 'Gravity'
@@ -580,7 +603,6 @@ class OdfParser(SwbfTextParser):
         LockedOnSound = 'LockedOnSound'
         LockedSound = 'LockedSound'
         LockOffAngle = 'LockOffAngle'
-        LockOnAngle_ = 'lockOnAngle'  # TODO
         LockOnAngle = 'LockOnAngle'
         LockOnRange = 'LockOnRange'
         LockOnTime = 'LockOnTime'
@@ -676,7 +698,6 @@ class OdfParser(SwbfTextParser):
         NeutralizeTime = 'NeutralizeTime'
         NextAimer = 'NextAimer'
         NextBarrel = 'NextBarrel'
-        NextCharge_ = 'NextCharge'  # TODO
         NextCharge = 'NEXTCHARGE'
         NextDropItem = 'NextDropItem'
         NoCombatInterrupt = 'NoCombatInterrupt'
@@ -829,7 +850,6 @@ class OdfParser(SwbfTextParser):
         ShockFadeOutGain = 'ShockFadeOutGain'
         ShockFadeOutTime = 'ShockFadeOutTime'
         ShockSound = 'ShockSound'
-        Shotdelay_ = 'shotdelay'  # TODO
         ShotDelay = 'ShotDelay'
         ShotElevate = 'ShotElevate'
         ShotPatternCount = 'ShotPatternCount'
@@ -847,7 +867,6 @@ class OdfParser(SwbfTextParser):
         SoldierAmmo = 'SoldierAmmo'
         SoldierAnimation = 'SoldierAnimation'
         SoldierBan = 'SoldierBan'
-        SoldierCollision_ = 'soldierCollision'  # TODO
         Soldiercollision = 'Soldiercollision'
         SoldierCollision = 'SoldierCollision'
         SoldierCollisionOnly = 'SoldierCollisionOnly'
@@ -873,7 +892,6 @@ class OdfParser(SwbfTextParser):
         StandMoveSpread = 'StandMoveSpread'
         StandSound = 'StandSound'
         StandStillSpread = 'StandStillSpread'
-        Static_ = 'static'  # TODO
         Static = 'Static'
         StatusTexture = 'StatusTexture'
         SteerLeft = 'steer_left'
@@ -1188,11 +1206,10 @@ class OdfParser(SwbfTextParser):
 
                 self.discard()  # \n
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
                 ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 

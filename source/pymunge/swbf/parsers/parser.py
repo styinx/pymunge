@@ -9,9 +9,39 @@ from parxel.token import Token
 
 from app.environment import MungeEnvironment as ENV
 from util.diagnostic import ErrorMessage
+from util.enum import Enum
 from util.logging import get_logger, ScopedLogger
 
+
 logger = get_logger(__name__)
+
+
+class Ext(Enum):
+    Asfx = 'asfx'
+    Cfg = 'cfg'
+    Ffx = 'ffx'
+    Fx = 'fx'
+    Lua = 'lua'
+    Mcfg = 'mcfg'
+    Mlst = 'mlst'
+    Msh = 'msh'
+    Mus = 'mus'
+    Odf = 'odf'
+    Pic = 'pic'
+    Pln = 'pln'
+    Pth = 'pth'
+    Req = 'req'
+    Sfx = 'sfx'
+    Sky = 'sky'
+    Snd = 'snd'
+    St4 = 'st4'
+    Stm = 'stm'
+    Ter = 'ter'
+    Tga = 'tga'
+    Tsr = 'tsr'
+    Wld = 'wld'
+    Zaa = 'zaa'
+    Zaf = 'zaf'
 
 
 class SwbfParser(Document):
@@ -64,13 +94,19 @@ class SwbfTextParser(TextParser, SwbfParser):
         TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser, received: str, expected: str):
-            super().__init__(f'Unexpected token at position {parser.token_position()}: Got "{received}", expected "{expected}"')
+            super().__init__(
+                f'Unexpected token in file {parser.filepath} at position {parser.token_position()}:'
+                f'Got "{received}", expected "{expected}"'
+            )
 
     class UnrecognizedToken(ErrorMessage):
         TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser):
-            super().__init__(f'Unrecognized token at position {parser.token_position()}: "{parser.get()} ({parser.get().type}) ({parser.tokens()})".')
+            super().__init__(
+                f'Unrecognized token in file {parser.filepath} at position {parser.token_position()}:'
+                f'"{parser.get()} ({parser.get().type}) ({parser.tokens()})".'
+            )
 
     def __init__(self, filepath: Path, tokens: list[Token] | None = None, logger: ScopedLogger = get_logger(__name__)):
 

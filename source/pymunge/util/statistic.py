@@ -33,6 +33,9 @@ class Statistic:
             print(s)
 
     def summary(self):
+        if not self.times:
+            return
+
         summed_times = {tag: duration(sum(x for x in keys.values()), True) for tag, keys in self.times.items()}
 
         tag_len = max(map(len, self.times.keys()))

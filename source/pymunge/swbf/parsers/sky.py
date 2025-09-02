@@ -5,7 +5,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.parser import Ext, SwbfTextParser
 from swbf.parsers.cfg import CfgParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
@@ -16,7 +16,7 @@ class SkyWarning(WarningMessage):
     TOPIC = 'SKY'
 
 class SkyParser(CfgParser):
-    Extension = 'sky'
+    Extension = Ext.Sky
 
     class Call(Enum):
         Ambient = 'Ambient'

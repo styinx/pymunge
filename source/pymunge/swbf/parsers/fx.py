@@ -3,7 +3,7 @@ from pathlib import Path
 
 from parxel.token import Token
 
-from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.parser import Ext, SwbfTextParser
 from swbf.parsers.cfg import CfgParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
@@ -14,7 +14,7 @@ class FxWarning(WarningMessage):
     TOPIC = 'FX'
 
 class FxParser(CfgParser):
-    Extension = 'fx'
+    Extension = Ext.Fx
 
     class Call(Enum):
         Alpha = 'Alpha'

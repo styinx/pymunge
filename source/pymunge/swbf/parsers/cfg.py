@@ -5,7 +5,7 @@ from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
 from app.environment import MungeEnvironment as ENV
-from swbf.parsers.parser import SwbfTextParser
+from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.enum import Enum
 from util.logging import get_logger
@@ -52,7 +52,7 @@ class Number(LexicalNode):
 
 
 class CfgParser(SwbfTextParser):
-    Extension = 'cfg'
+    Extension = Ext.Cfg
 
     class Call(Enum):
         AmbientColor = 'AmbientColor'
@@ -156,11 +156,10 @@ class CfgParser(SwbfTextParser):
                 self.discard() # }
                 self.exit_scope()
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
                 ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 

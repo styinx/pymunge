@@ -1,10 +1,11 @@
 import pickle
 from pathlib import Path
+from multiprocessing import Queue
+
+from parxel.nodes import Document
 
 from util.diagnostic import Diagnostic, ErrorMessage
 from util.logging import ScopedLogger, get_logger
-
-from parxel.nodes import Document
 
 
 class BuildDependency(Document):
@@ -19,6 +20,9 @@ class FileRegistry:
     it checks if the input files are up to date or need remunging.
     """
 
+    TOOL_FILTER = {
+    }
+
     class UnresolvedDependency(ErrorMessage):
         TOPIC = 'REG'
 
@@ -27,6 +31,7 @@ class FileRegistry:
 
     def __init__(self, args, diagnostic: Diagnostic, logger: ScopedLogger = get_logger(__name__)):
         self.dependencies = {}
+        self.munge_queue = Queue()
 
         self.diagnostic = diagnostic
         self.logger = logger
@@ -34,7 +39,27 @@ class FileRegistry:
         self.source : Path = args.munge.source
         self.target : Path = args.munge.target
 
+        self.munge_dir = self.target / '_munged'
+
+        if not self.munge_dir.exists():
+            self.munge_dir.mkdir(parents=True)
+
+    def collect_munge_files(self, source_filters):
+        """
+        Adds files based on the configured filter list to the munge queue.
+        """
+
+        self.logger.info(f'Processing "{self.source}"')
+        for source_filter in source_filters:
+            for entry in self.source.rglob(f'*.{source_filter}'):
+                self.munge_queue.put(entry)
+        self.logger.info(f'Results written to "{self.target}"')
+
     def register_file(self, filepath: Path):
+        """
+        Adds a file path to the registry. A registered file can be referenced as dependency.
+        """
+
         if not filepath.exists():
             self.diagnostic.report(FileRegistry.UnresolvedDependency(filepath))
 
@@ -48,12 +73,22 @@ class FileRegistry:
         return None
 
     def add_dependency(self, src: Path, dst: Path):
+        """
+        Links two file paths as dependencies.
+        """
+
         src_dep = self.register_file(src)
         dst_dep = self.register_file(dst)
         if src_dep and dst_dep:
             src_dep.add(dst_dep)
 
     def store_dependencies(self):
+        """
+        Write the current dependency tree for incremental builds.
+        Up-to-date dependencies are not remunged.
+        """
+
+        # No history if single file is munged.
         if self.target.is_file():
             return
 
@@ -61,6 +96,11 @@ class FileRegistry:
             pickle.dump(self.dependencies, graph_file)
 
     def load_dependencies(self):
+        """
+        Load build dependencies if a previous run was made in the target folder.
+        """
+
+        # No history if single file was munged.
         if self.target.is_file():
             return
 

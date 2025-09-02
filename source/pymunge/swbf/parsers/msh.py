@@ -3,7 +3,7 @@ from pathlib import Path
 from parxel.nodes import Node, BinaryNode
 from parxel.parser import BinaryParser
 
-from swbf.parsers.parser import SwbfBinaryParser
+from swbf.parsers.parser import Ext, SwbfBinaryParser
 from util.logging import ScopedLogger, get_logger
 
 
@@ -737,7 +737,7 @@ class WeightBones(MshChunk, BinaryNode):
 
 
 class MshParser(SwbfBinaryParser):
-    Extension = 'msh'
+    Extension = Ext.Msh
 
     def __init__(self, filepath: Path, buffer: bytes = None, logger : ScopedLogger = get_logger(__name__)):
         SwbfBinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)
