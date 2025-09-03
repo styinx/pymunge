@@ -7,21 +7,16 @@ import traceback
 
 from app.environment import MungeEnvironment
 from app.munger import Munger
+from config import CONFIG, CWD, parse_config, MungeFlags, MungeMode, MungePlatform, MungeTool, GameVersion
 from swbf.parsers.parser import Ext
 from util.enum import Enum
 from util.logging import LogLevel, get_logger
 from util.status import ExitCode
 from version import INFO as VERSION_INFO
-from config import CONFIG, parse_config
 
 
-def handle_signal(signum, frame):
-    print("Received SIGTERM, shutting down pool...")
-    executor.shutdown(wait=False, cancel_futures=True)
-    exit(0)
-
-signal(SIGTERM, handle_signal)
-signal(SIGINT, handle_signal)
+signal(SIGTERM, Munger.handle_signal)
+signal(SIGINT, Munger.handle_signal)
 
 
 class Run(Enum):
@@ -51,7 +46,9 @@ def create_parser():
     parser = ArgumentParser('pymunge')
     parser.add_argument('-a', '--ansi-style', action='store_true', default=CONFIG.ansi_style)
     parser.add_argument('-c', '--config', type=File)
+    parser.add_argument('-f', '--log-file', type=str, default=CONFIG.log_file)
     parser.add_argument('-l', '--log-level', type=str, default=CONFIG.log_level, choices=list(LogLevel))
+    parser.add_argument('-n', '--no-log-file', action='store_true')
     parser.add_argument('-H', '--headless', action='store_true', default=CONFIG.headless)
     parser.add_argument('-v', '--version', action='store_true', default=CONFIG.version)
 
@@ -59,26 +56,27 @@ def create_parser():
 
     munge = run_parsers.add_parser(Run.Munge)
     munge.add_argument('-b', '--binary-dir', type=MungePath, default=CONFIG.munge.binary_dir)
-    munge.add_argument('-c', '--cache', type=Path)
+    munge.add_argument('-c', '--cache-file', type=Path, default=CONFIG.munge.cache_file)
     munge.add_argument('-C', '--clean', action='store_true', default=CONFIG.munge.clean)
     munge.add_argument('-d', '--dry-run', action='store_true', default=CONFIG.munge.dry_run)
-    munge.add_argument('-f', '--flags', type=str, action='append', choices=list(Munger.Flags))
+    munge.add_argument('-f', '--flags', type=str, action='append', choices=list(MungeFlags))
     munge.add_argument('-i', '--interactive', action='store_true', default=CONFIG.munge.interactive)
-    munge.add_argument('-m', '--munge-mode', type=str, default=CONFIG.munge.munge_mode, choices=list(Munger.Mode))
-    munge.add_argument('-p', '--platform', type=str, default=CONFIG.munge.platform, choices=list(Munger.Platform))
+    munge.add_argument('-m', '--mode', type=str, default=CONFIG.munge.mode, choices=list(MungeMode))
+    munge.add_argument('-p', '--platform', type=str, default=CONFIG.munge.platform, choices=list(MungePlatform))
     munge.add_argument('-r', '--resolve-dependencies', action='store_true', default=CONFIG.munge.resolve_dependencies)
     munge.add_argument('-s', '--source', type=MungePath, default=CONFIG.munge.source)
     munge.add_argument('-t', '--target', type=MungePath, default=CONFIG.munge.target)
+    munge.add_argument('-v', '--game-version', type=str, default=CONFIG.munge.game_version, choices=list(GameVersion))
 
     cache = run_parsers.add_parser(Run.Cache)
     cache.add_argument('-f', '--file', type=File, default=CONFIG.cache.file)
 
     munge_parsers = munge.add_subparsers(dest='tool')
 
-    configmunge = munge_parsers.add_parser(Tool.ConfigMunge)
-    modelmunge = munge_parsers.add_parser(Tool.ModelMunge)
-    odfmunge = munge_parsers.add_parser(Tool.OdfMunge)
-    scriptmunge = munge_parsers.add_parser(Tool.ScriptMunge)
+    configmunge = munge_parsers.add_parser(MungeTool.ConfigMunge)
+    modelmunge = munge_parsers.add_parser(MungeTool.ModelMunge)
+    odfmunge = munge_parsers.add_parser(MungeTool.OdfMunge)
+    scriptmunge = munge_parsers.add_parser(MungeTool.ScriptMunge)
 
     return parser
 
@@ -101,44 +99,6 @@ def build_args(parser, args):
             build_args(subparser, args)
 
 
-class Tool(Enum):
-    """
-    If specified the munge tool filters the input of the munging process.
-    """
-    AnimationMunge = 'AnimationMunge'
-    BinMunge = 'BinMunge'
-    ConfigMunge = 'ConfigMunge'
-    LevelPack = 'LevelPack'
-    LocalizeMunge = 'LocalizeMunge'
-    ModelMunge = 'ModelMunge'
-    MovieMunge = 'MovieMunge'
-    OdfMunge = 'OdfMunge'
-    PathMunge = 'PathMunge'
-    PathPlanningMunge = 'PathPlanningMunge'
-    ScriptMunge = 'ScriptMunge'
-    SoundFLMunge = 'SoundFLMunge'
-    TerrainMunge = 'TerrainMunge'
-    TextureMunge = 'TextureMunge'
-    WorldMunge = 'WorldMunge'
-
-    _FILTER = {
-        BinMunge: [Ext.Zaa, Ext.Zaf],
-        ConfigMunge: [Ext.Cfg, Ext.Ffx, Ext.Fx, Ext.Mcfg, Ext.Mus, Ext.Sky, Ext.Snd, Ext.Tsr],
-        LevelPack: [Ext.Req],
-        LocalizeMunge: [Ext.Cfg],
-        ModelMunge: [Ext.Msh],
-        MovieMunge: [Ext.Mlst],
-        OdfMunge: [Ext.Odf],
-        PathMunge: [Ext.Pth],
-        PathPlanningMunge: [Ext.Pln],
-        ScriptMunge: [Ext.Lua],
-        SoundFLMunge: [Ext.Asfx, Ext.Sfx, Ext.St4, Ext.Stm],
-        TerrainMunge: [Ext.Ter],
-        TextureMunge: [Ext.Tga, Ext.Pic],
-        WorldMunge: [Ext.Wld],
-    }
-
-
 def main():
     parser = create_parser()
 
@@ -155,7 +115,9 @@ def main():
         print(VERSION_INFO)
         return ExitCode.Success
 
-    logger = get_logger('pymunge', path=Path(getcwd()), level=args.log_level, ansi_style=args.ansi_style)
+    log_path = None if args.no_log_file else CWD
+    log_file = None if args.no_log_file else args.log_file
+    logger = get_logger('pymunge', filepath=log_path, filename=log_file, level=args.log_level, ansi_style=args.ansi_style)
 
     logger.debug(f'Munger config:')
     with logger:
@@ -164,7 +126,7 @@ def main():
 
     try:
         if args.munge.tool:
-            source_filters = Tool._FILTER[args.munge.tool]
+            source_filters = MungeTool._FILTER[args.munge.tool]
         else:
             source_filters = [Ext.Req]
 
@@ -172,19 +134,17 @@ def main():
         environment.registry.load_dependencies()
         environment.registry.collect_munge_files(source_filters)
 
-        if args.run == 'munge':
+        if args.run == Run.Munge:
             munger = Munger()
             munger.run()
 
-            if args.munge.cache:
-                environment.store_cache()
-
-        elif args.run == 'cache':
+        elif args.run == Run.Cache:
             environment.load_cache()
 
         if args.log_level == LogLevel.Debug:
             environment.details()
 
+        environment.store_cache()
         environment.registry.store_dependencies()
         environment.summary()
 

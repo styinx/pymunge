@@ -33,21 +33,22 @@ class MungeEnvironment:
         if not MungeEnvironment.Stat:
             MungeEnvironment.Stat = self.statistic
 
-        if args.munge.cache:
-            self.cache_file = args.cache.file
+        self.export_cache_file = args.munge.cache_file
+        if args.run == 'cache':
+            self.import_cache_file = args.cache.file
 
     def store_cache(self):
         pickle.dump({
             'diagnostic': self.diagnostic,
             'statistic': self.statistic,
-        }, self.cache_file.open('wb+'))
+        }, self.export_cache_file.open('wb+'))
 
-        self.logger.info(f'Storing cache to file "{self.cache_file}"')
+        self.logger.info(f'Store cache file: "{self.export_cache_file}"')
 
     def load_cache(self):
-        self.logger.info(f'Loading cache from file "{self.cache_file}"')
+        self.logger.info(f'Load cache file: "{self.import_cache_file}"')
 
-        dump = pickle.load(self.cache_file.open('rb'))
+        dump = pickle.load(self.import_cache_file.open('rb'))
 
         self.diagnostic = dump['diagnostic']
         self.statistic = dump['statistic']

@@ -1,8 +1,9 @@
-from multiprocessing import cpu_count as CPUS, Process
+from multiprocessing import cpu_count as CPUS
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from concurrent.futures import ProcessPoolExecutor
-import multiprocessing as mp
+from queue import Empty
+from signal import Signals
+from sys import exit
+from threading import Thread, Event
 
 from app.environment import MungeEnvironment as ENV
 from app.ui import gui
@@ -25,21 +26,6 @@ class Munger:
     Entry point of the munging process.
     """
 
-    class Flags(Enum):
-        Test1 = 'Test1'
-        Test2 = 'Test2'
-
-    class Mode(Enum):
-        Side = 'side'
-        Sound = 'sound'
-        World = 'world'
-        Full = 'full'
-
-    class Platform(Enum):
-        PC = 'pc'
-        PS2 = 'ps2'
-        XBOX = 'xbox'
-
     PARSER = {
         Ext.Cfg: CfgParser,
         Ext.Fx: FxParser,
@@ -55,32 +41,50 @@ class Munger:
         Ext.Req: Ucfb,
     }
 
+    StopEvent = Event()
+
     def __init__(self):
         pass
         #self.ui: Process = Process(target=gui)
 
-    def worker(queue, target):
-        for file in iter(queue.get, None):  # stop when None is sent
-            Munger.munge(file, target)
-
     def run(self):
         #self.ui.start()
 
-        queue = mp.Queue()
+        threads = []
 
-        # Fill the queue
-        while not ENV.Reg.munge_queue.empty():
-            queue.put(ENV.Reg.munge_queue.get())
+        for _ in range(CPUS() - 1):
+            t = Thread(target=Munger.worker)
+            threads.append(t)
+            t.start()
 
-        with ProcessPoolExecutor(max_workers=CPUS() - 1) as executor:
-            for _ in range(CPUS() - 1):
-                executor.submit(Munger.worker, queue, ENV.Reg.munge_dir)
-
-            # Signal workers to exit
-            for _ in range(CPUS() - 1):
-                queue.put(None)
+        for t in threads:
+            t.join()
 
         #self.ui.join()
+    
+    @staticmethod
+    def handle_signal(signum, frame):
+        ENV.Log.critical(f'Received signal {signum} ({Signals(signum).name})')
+        Munger.StopEvent.set()
+        exit(1)
+
+    @staticmethod
+    def worker():
+        while not Munger.StopEvent.is_set():
+
+            try:
+                file = ENV.Reg.munge_queue.get(timeout=0.5)
+                if file:
+                    Munger.munge(file, ENV.Reg.munge_dir)
+
+            except Empty:
+                # TODO: Breaking the loop should only occur after munging is done 
+                break
+
+            except Exception as e:
+                ENV.Log.error(str(e))
+                Munger.StopEvent.set()
+                break
 
     @staticmethod
     def munge(file: Path, target: Path):

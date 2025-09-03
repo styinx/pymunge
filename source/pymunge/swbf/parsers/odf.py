@@ -979,7 +979,6 @@ class OdfParser(SwbfTextParser):
         TrackOffset = 'TrackOffset'
         Traction = 'Traction'
         TrailEffect = 'TrailEffect'
-        TrakCenter = 'TrakCenter'
         TransmitRange = 'TransmitRange'
         TransparentType = 'TransparentType'
         TrialEffect = 'TrialEffect'

@@ -1,5 +1,6 @@
 import logging
 import sys
+from os import getcwd
 from pathlib import Path
 from util.enum import Enum
 
@@ -133,7 +134,7 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_style: bool = False):
+def get_logger(name: str, filepath: Path = Path(), filename: str = None, level: str = LogLevel.Info, ansi_style: bool = False):
     logger = logging.getLogger(name)
 
     datefmt='%Y-%m-%d %H:%M:%S'
@@ -159,7 +160,7 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
     logger.addHandler(stream_handler)
 
     # File handler
-    if path.name:
+    if (filepath and filepath.name) or filename:
         # yapf: disable
         file_format = str(
             '%(asctime)s.%(msecs)03d | '
@@ -170,7 +171,9 @@ def get_logger(name: str, path: Path = Path(), level: str = LogLevel.Info, ansi_
         )
         # yapf: enable
 
-        file_handler = logging.FileHandler(path / (name + '.log'))
+        filename = name + '.log' if not filename else filename
+        filepath = getcwd() if not filepath.name else filepath
+        file_handler = logging.FileHandler(filepath / filename)
         file_handler.setFormatter(logging.Formatter(file_format, datefmt=datefmt))
         logger.addHandler(file_handler)
 

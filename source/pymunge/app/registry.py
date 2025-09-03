@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from multiprocessing import Queue
+from queue import Queue
 
 from parxel.nodes import Document
 
@@ -95,6 +95,8 @@ class FileRegistry:
         with (self.target / '.pymunge.graph').open('wb+') as graph_file:
             pickle.dump(self.dependencies, graph_file)
 
+            self.logger.info(f'Store dependency file: "{graph_file.name}"')
+
     def load_dependencies(self):
         """
         Load build dependencies if a previous run was made in the target folder.
@@ -107,6 +109,8 @@ class FileRegistry:
         graph_file = (self.target / '.pymunge.graph')
 
         if graph_file.exists():
+            self.logger.info(f'Load dependency file: "{graph_file}"')
+
             self.dependencies = pickle.load(graph_file.open('rb'))
 
             for filepath, dependency in self.dependencies.items():
