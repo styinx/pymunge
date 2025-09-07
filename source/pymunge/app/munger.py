@@ -48,6 +48,9 @@ class Munger:
         #self.ui: Process = Process(target=gui)
 
     def run(self):
+        if ENV.Reg.munge_queue.qsize() == 0:
+            return
+
         #self.ui.start()
 
         threads = []
@@ -97,7 +100,6 @@ class Munger:
         parser_type = Munger.PARSER[ext]
         parser = parser_type(filepath=file, logger=ENV.Log)
         tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
-        ENV.Reg.register_file(parser.filepath)
 
         if ext not in Munger.BUILDER:
             ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for building'))
@@ -117,4 +119,6 @@ class Munger:
         with build_file.open('wb+') as f:
             ENV.Log.debug(f'Writing "{build_file}"')
             f.write(ucfb.data())
-            ENV.Reg.register_file(build_file)
+            #ENV.Reg.register_file(build_file) # TODO: register to build files
+        
+        ENV.Reg.mark_munged(file)

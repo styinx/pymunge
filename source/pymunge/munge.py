@@ -131,12 +131,16 @@ def main():
             source_filters = [Ext.Req]
 
         environment = MungeEnvironment(args, logger)
-        environment.registry.load_dependencies()
-        environment.registry.collect_munge_files(source_filters)
 
         if args.run == Run.Munge:
+            environment.registry.load_dependencies()
+            environment.registry.collect_munge_files(source_filters)
+
             munger = Munger()
             munger.run()
+
+            environment.store_cache()
+            environment.registry.store_dependencies()
 
         elif args.run == Run.Cache:
             environment.load_cache()
@@ -144,8 +148,6 @@ def main():
         if args.log_level == LogLevel.Debug:
             environment.details()
 
-        environment.store_cache()
-        environment.registry.store_dependencies()
         environment.summary()
 
     except Exception as e:

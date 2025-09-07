@@ -23,6 +23,12 @@ Further use cases could include:
 - Customize munge output
 - Custom munge imports
 
+
+## TODOs and other stuff
+
+- What to do about files modified during munging?
+
+
 ## Documentation
 
 [pymunge docs](https://styinx.github.io/pymunge/)

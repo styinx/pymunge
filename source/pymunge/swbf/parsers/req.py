@@ -179,7 +179,7 @@ class ReqParser(SwbfTextParser):
                     else:
                         value = Value(self.collect_tokens(), type)
                         self.add_to_scope(value)
-                        ENV.Reg.add_dependency(self.filepath, value.filepath)
+                        ENV.Reg.add_link(self.filepath, value.filepath)
 
                 elif self.get().type == TK.EqualSign:
                     self.consume_until(TK.QuotationMark)

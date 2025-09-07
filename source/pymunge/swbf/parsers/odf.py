@@ -54,10 +54,7 @@ class Reference(Value):
     def __init__(self, basepath: Path, tokens: list[Token], parent: Node = None):
         Value.__init__(self, tokens, parent)
 
-        self.filepath = basepath / self.raw()
-
-    def raw_stem(self) -> str:
-        return self.filepath.stem.replace('"', '')
+        self.filepath = basepath / self.raw().replace('"', '')
 
 
 class Section(OdfNode):
@@ -1197,7 +1194,7 @@ class OdfParser(SwbfTextParser):
                 if re.match(Reference.RE_FILE, value_text) is not None:
                     reference = Reference(self.filepath.parent, value_tokens)
                     key.add(reference)
-                    ENV.Reg.add_dependency(self.filepath, reference.filepath)
+                    ENV.Reg.add_link(self.filepath, reference.filepath)
 
                 else:
                     value = Value(value_tokens)

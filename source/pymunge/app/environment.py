@@ -21,20 +21,29 @@ class MungeEnvironment:
     def __init__(self, args, logger: ScopedLogger = get_logger(__name__)):
         self.logger: ScopedLogger = logger
         self.diagnostic: Diagnostic = Diagnostic(logger=logger)
-        self.registry: FileRegistry = FileRegistry(args, diagnostic=self.diagnostic, logger=logger)
         self.statistic: Statistic = Statistic()
 
-        if not MungeEnvironment.Diag:
+        if not MungeEnvironment.Diag and self.diagnostic:
             MungeEnvironment.Diag = self.diagnostic
-        if not MungeEnvironment.Log:
+        if not MungeEnvironment.Log and self.logger:
             MungeEnvironment.Log = self.logger
-        if not MungeEnvironment.Reg:
-            MungeEnvironment.Reg = self.registry
-        if not MungeEnvironment.Stat:
+        if not MungeEnvironment.Stat and self.statistic:
             MungeEnvironment.Stat = self.statistic
 
-        self.export_cache_file = args.munge.cache_file
-        if args.run == 'cache':
+        if args.run == 'munge':
+            self.registry: FileRegistry = FileRegistry(
+                source=args.munge.source,
+                target=args.munge.target,
+                diagnostic=self.diagnostic,
+                logger=logger
+            )
+
+            if not MungeEnvironment.Reg and self.registry:
+                MungeEnvironment.Reg = self.registry
+
+            self.export_cache_file = args.munge.cache_file
+
+        elif args.run == 'cache':
             self.import_cache_file = args.cache.file
 
     def store_cache(self):

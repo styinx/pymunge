@@ -139,7 +139,7 @@ class AsfxParser(SwbfTextParser):
 
                 sfx = SoundEffect(self.collect_tokens())
                 self.enter_scope(sfx)
-                ENV.Reg.add_dependency(self.filepath, sfx.filepath)
+                ENV.Reg.add_link(self.filepath, sfx.filepath)
 
                 while self.get().type == TK.Minus:
                     self.discard()  # -

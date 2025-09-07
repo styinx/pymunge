@@ -52,8 +52,6 @@ class SwbfParser(Document):
 
         self.logger: ScopedLogger = logger
 
-        ENV.Reg.register_file(self.filepath)
-
     @classmethod
     def cmd_helper(cls: type):
         # Stub

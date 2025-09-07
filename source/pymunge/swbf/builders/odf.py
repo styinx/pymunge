@@ -107,7 +107,7 @@ class ClassBuilder(SwbfUcfbBuilder):
                 val = key.children[0]
                 if isinstance(val, Reference):
                     magic = int32_data(fnv1a_32(key.name))
-                    data = (val.raw_stem() + chr(0)).encode('utf-8')
+                    data = (val.filepath.stem + chr(0)).encode('utf-8')
 
                     prop = BinaryProperty(ClassChunk.PROP, magic + data)
                     self.add(prop)
