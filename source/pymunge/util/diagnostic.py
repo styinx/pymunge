@@ -90,7 +90,7 @@ class Diagnostic:
         self.messages: list[DiagnosticMessage] = []
         self.severeties: dict = {}
 
-        for severity in Severity:
+        for severity in Severity.vals():
             self.severeties[severity] = 0
 
     def report(self, message: DiagnosticMessage):

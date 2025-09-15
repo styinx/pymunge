@@ -99,7 +99,7 @@ class Git:
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-l', '--log-level', default=LogLevel.Info, choices=list(LogLevel))
+    parser.add_argument('-l', '--log-level', default=LogLevel.Info, choices=LogLevel.vals())
 
     actions = parser.add_subparsers(dest='action')
 
