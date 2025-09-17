@@ -6,7 +6,6 @@ from sys import exit
 from threading import Thread, Event
 
 from app.environment import MungeEnvironment as ENV
-from app.ui import gui
 from swbf.parsers.cfg import CfgParser
 from swbf.parsers.fx import FxParser
 from swbf.parsers.msh import MshParser
@@ -17,9 +16,8 @@ from swbf.parsers.sky import SkyParser
 from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
-from util.enum import Enum
 from util.diagnostic import ErrorMessage
-
+from util.ui import gui
 
 class Munger:
     """

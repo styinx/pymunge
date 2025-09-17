@@ -2,7 +2,7 @@ import logging
 import sys
 from os import getcwd
 from pathlib import Path
-from util.enum import Enum
+from util.enumeration import Enum
 
 
 class Ansi:

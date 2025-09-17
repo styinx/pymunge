@@ -1,6 +1,6 @@
 from math import log10
 
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import get_logger, Ansi, ScopedLogger
 
 

@@ -9,7 +9,7 @@ from parxel.token import Token
 
 from app.environment import MungeEnvironment as ENV
 from util.diagnostic import ErrorMessage
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import get_logger, ScopedLogger
 
 

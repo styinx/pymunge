@@ -8,7 +8,7 @@ from app.environment import MungeEnvironment as ENV
 from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
 from util.logging import get_logger
-from util.enum import Enum
+from util.enumeration import Enum
 
 
 class AsxWarning(WarningMessage):

@@ -9,7 +9,7 @@ from parxel.token import TK, Token
 from app.environment import MungeEnvironment as ENV
 from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import get_logger
 
 

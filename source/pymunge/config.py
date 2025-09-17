@@ -13,7 +13,7 @@ PATH.append(str(PYMUNGE_DIR))
 
 from swbf.parsers.parser import Ext # TODO: remove
 from util.logging import LogLevel
-from util.enum import Enum
+from util.enumeration import Enum
 
 
 class Run(Enum):

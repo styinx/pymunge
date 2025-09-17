@@ -10,7 +10,7 @@ from app.munger import Munger
 from config import CONFIG, CWD, build_args, parse_config, populate_config, File, MungePath
 from config import GameVersion, MungeFlags, MungeMode, MungePlatform, MungeTool, Run
 from swbf.parsers.parser import Ext
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import LogLevel, get_logger
 from util.status import ExitCode
 from version import INFO as VERSION_INFO

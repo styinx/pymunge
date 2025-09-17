@@ -2,15 +2,22 @@ class EnumMeta(type):
     def __new__(mcls, name, bases, namespace):
         annotations = namespace.get('__annotations__', {})
         counter = 0
-        enumerators = []
+        enumerators = {}
+        print(namespace)
+
+        for a, v in annotations.items():
+            namespace[a] = 0
 
         for attr in list(annotations) + [k for k in namespace if not k.startswith('__') and k not in annotations]:
+
             if attr in annotations:
                 typ = annotations[attr]
+
                 if attr in namespace:
                     value = namespace[attr]
                     if isinstance(value, int):
-                        counter = value + 1
+                        counter = max(counter, value + 1)
+
                 else:
                     if typ is str:
                         value = attr
@@ -19,16 +26,18 @@ class EnumMeta(type):
                         counter += 1
                     else:
                         raise TypeError(f'Unsupported type {typ} for {attr}')
+
                     namespace[attr] = value
+
             else:
                 value = namespace[attr]
                 if isinstance(value, int):
                     counter = max(counter, value + 1)
 
-            enumerators.append((attr, namespace[attr]))
+            enumerators[attr] = namespace[attr]
 
         cls = super().__new__(mcls, name, bases, namespace)
-        cls.enumerators = enumerators
+        cls.enumerators = list(enumerators.items())
         return cls
 
     def __iter__(cls):

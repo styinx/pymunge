@@ -2,7 +2,7 @@ import struct
 
 from parxel.nodes import Document
 
-from util.enum import Enum
+from util.enumeration import Enum
 from swbf.parsers.req import ReqParser
 
 
