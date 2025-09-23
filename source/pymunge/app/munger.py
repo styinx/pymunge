@@ -17,7 +17,6 @@ from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
 from util.diagnostic import ErrorMessage
-from util.ui import gui
 
 class Munger:
     """

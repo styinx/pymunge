@@ -3,11 +3,8 @@ class EnumMeta(type):
         annotations = namespace.get('__annotations__', {})
         counter = 0
         enumerators = {}
-        print(namespace)
 
-        for a, v in annotations.items():
-            namespace[a] = 0
-
+        # Annotations
         for attr in list(annotations) + [k for k in namespace if not k.startswith('__') and k not in annotations]:
 
             if attr in annotations:
@@ -35,6 +32,13 @@ class EnumMeta(type):
                     counter = max(counter, value + 1)
 
             enumerators[attr] = namespace[attr]
+
+        # Alias
+        for k, v in list(enumerators.items()):
+            if isinstance(v, str):
+                if v in enumerators:
+                    enumerators[k] = enumerators[v]
+                    namespace[k] = enumerators[v]
 
         cls = super().__new__(mcls, name, bases, namespace)
         cls.enumerators = list(enumerators.items())
