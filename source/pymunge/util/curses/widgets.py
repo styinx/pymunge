@@ -16,7 +16,7 @@ class Widget:
 
     def set_text(self, y, x, text: str):
         if self.win:
-            self.win.addstr(y, x, text, self.style.flags())
+            self.win.addstr(y, x, text[:self.size.w], self.style.flags())
 
         return self
 
@@ -95,7 +95,8 @@ class Grid(Layout):
 
     def draw(self):
         for widget in self.cells.keys():
-            widget.win = self.win.subwin(*widget.size.hwyx)
+            if self.win:
+                widget.win = self.win.subwin(*widget.size.hwyx)
             widget.draw()
 
         return self
@@ -364,6 +365,10 @@ class Root(Widget):
         self.resize(Size(0, 0, w, h))
 
         while self.running:
+            h, w = self.win.getmaxyx()
+            if (w, h) != (self.size.w, self.size.h):
+                self.resize(Size(0, 0, w, h))
+
             self.draw()
             c = self.win.getch()
 

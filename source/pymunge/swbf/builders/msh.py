@@ -2,6 +2,8 @@ from pathlib import Path
 
 from pyglm import glm
 
+from parxel.nodes import Node
+
 from app.environment import MungeEnvironment as ENV
 from swbf.builders.builder import Ext
 from swbf.builders.builder import UcfbNode, int32_data, string_data, float32_array_data
@@ -9,7 +11,7 @@ from swbf.builders.builder import StringProperty, BinaryProperty
 from swbf.builders.builder import Magic, SwbfUcfbBuilder
 from swbf.parsers.msh import MshParser, MshChunk
 from swbf.parsers.msh import Header, Mesh, SceneInformation, Name
-from swbf.parsers.msh import Model, ModelType, ModelIndex, FlagsModel, ParentModel, TransformModel
+from swbf.parsers.msh import Model, ModelType, ModelIndex, FlagsModel, ParentModel, TransformModel, Geometry, Envelope, SegmentHeader, WeightBones
 from util.diagnostic import ErrorMessage
 
 
@@ -56,6 +58,28 @@ class ModelInfoProperty(UcfbNode):
         return string_data(self.magic) + int32_data(self.length + 4) + string_data(self.name) + int32_data(self.models) + string_data(self.pad)
 
 
+class ModelNode(Node):
+    def __init__(self, model: Model):
+        super().__init__()
+        parent = model.find(ParentModel)
+        self.name = model.find(Name).raw_name()
+        self.type = model.find(ModelType).model_type
+        self.parent = parent.raw_name() if parent else None
+        self.index = model.find(ModelIndex).model_index
+        self.model_transform = model.find(TransformModel)
+        self.geometry = model.find(Geometry)
+        self.is_enveloped = True if self.geometry != None and self.geometry.find(Envelope) != None else False
+        self.is_deformer = False
+
+        model_transform = model.find(TransformModel)
+        if model_transform:
+            q = glm.quat(*[0.0 if x == -0.0 else x for x in model_transform.rotation])
+
+            rotation_matrix = glm.mat3_cast(q)
+            #model_transforms += rotation_matrix.to_bytes()
+            #model_transforms += float32_array_data(model_transform.translation)
+
+
 class ModelBuilder(SwbfUcfbBuilder):
     Extension = Ext.Model
 
@@ -73,59 +97,55 @@ class ModelBuilder(SwbfUcfbBuilder):
             pass
 
         model_root = None
-        model_names = {}
+        enveloped_names = []
         model_parents = []
         model_transforms = bytearray()
 
-        model_order = {}
+        model_tree = {}
+        model_indices = {}
 
+        # Build model tree
         for model in mesh.find_all(Model):
-            if model_root is None:
+            model_node = ModelNode(model)
+            model_tree[model_node.name] = model_node
+            model_indices[model_node.index] = model_node
+
+            if not model_node.parent:
                 model_root = model
 
-            model_name = model.find(Name)
-            model_type = model.find(ModelType)
-            model_parent = model.find(ParentModel)
-            model_transform = model.find(TransformModel)
+            else:
+                model_tree[model_node.parent].add(model_tree[model_node.name])
 
-            if not model_name:
-                ENV.Diag.report(MissingMshChunk(Name, self.tree.filepath))
-            if not model_type:
-                ENV.Diag.report(MissingMshChunk(ModelType, self.tree.filepath))
+        # Find enveloped models
+        for index, node in model_indices.items():
 
-            if not model_name and not model_type:
+            if not node.is_enveloped:
                 continue
 
-            if model_type.model_type in [ModelType.Bone, ModelType.Static]:
+            envelope = node.geometry.find(Envelope)
+            segments = node.geometry.find(SegmentHeader)
+            weights = segments.find(WeightBones).weights
 
-                if model_name.name.startswith('p_') or model_name.name.endswith('_lowrez'):
-                    continue
+            weighted_bone_indices = [vertex[0] for weight in weights for vertex in weight if vertex[0] > 0 and vertex[1] > 0.0]
 
-                model_names[model_name.name.rstrip('\0')] = model
+            for envl_index in weighted_bone_indices:
+                modl_index = envelope.indices[envl_index]
+                if model_indices[modl_index].name not in enveloped_names:
+                    enveloped_names.append(model_indices[modl_index].name)
 
-                print(model_name.name)
-                #print(model_type.dump(recursive=False, properties=True))
+        def p(n, i=0):
+            print(' ' * i, i, n.name, f'[{n.index}]' f'({n.type})')
+            for c in n.children:
+                p(c, i + 1)
 
-                if model_parent:
-                    if model_parent.name.rstrip('\0') in model_order:
-                        model_order[model_parent.name.rstrip('\0')] = model_name.name.rstrip('\0')
-                        model_parents.append(model_parent.name.rstrip('\0'))
-                else:
-                    model_parents.append('')
-                    model_order[model_name.name.rstrip('\0')] = {}
+        p(model_tree[model_root.find(Name).raw_name()])
+        print(enveloped_names)
 
-                if model_transform:
-                    q = glm.quat(*[0.0 if x == -0.0 else x for x in model_transform.rotation])
-
-                    rotation_matrix = glm.mat3_cast(q)
-                    model_transforms += rotation_matrix.to_bytes()
-                    model_transforms += float32_array_data(model_transform.translation)
-
-        info_property = ModelInfoProperty(ModelChunk.INFO, self.tree.filepath.stem, len(model_names))
+        info_property = ModelInfoProperty(ModelChunk.INFO, self.tree.filepath.stem, len(enveloped_names))
         self.add(info_property)
 
-        model_names = '\0'.join(model_names.keys())
-        name_property = StringProperty(ModelChunk.NAME, model_names)
+        enveloped_names = '\0'.join(enveloped_names)
+        name_property = StringProperty(ModelChunk.NAME, enveloped_names)
         self.add(name_property)
 
         model_parents = '\0'.join(model_parents)

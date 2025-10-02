@@ -122,6 +122,7 @@ CONFIG = Namespace(**{
         'dry_run': False,
         'interactive': False,
         'mode': MungeMode.Full,
+        'no_cache': False,
         'platform': MungePlatform.PC,
         'resolve_dependencies': True,
         'source': CWD,

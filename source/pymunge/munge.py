@@ -40,6 +40,7 @@ def create_parser():
     munge.add_argument('-f', '--flags', type=str, action='append', choices=MungeFlags.vals())
     munge.add_argument('-i', '--interactive', action='store_true', default=CONFIG.munge.interactive)
     munge.add_argument('-m', '--mode', type=str, default=CONFIG.munge.mode, choices=MungeMode.vals())
+    munge.add_argument('-n', '--no-cache', action='store_true', default=CONFIG.munge.no_cache)
     munge.add_argument('-p', '--platform', type=str, default=CONFIG.munge.platform, choices=MungePlatform.vals())
     munge.add_argument('-r', '--resolve-dependencies', action='store_true', default=CONFIG.munge.resolve_dependencies)
     munge.add_argument('-s', '--source', type=MungePath, default=CONFIG.munge.source)
@@ -86,7 +87,8 @@ def main():
         environment = MungeEnvironment(args, logger)
 
         if args.run == Run.Munge:
-            environment.registry.load_dependencies()
+            if not args.munge.no_cache:
+                environment.registry.load_dependencies()
             environment.registry.collect_munge_files(source_filters)
 
             munger = Munger()

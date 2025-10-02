@@ -4,8 +4,9 @@ from queue import Queue
 
 from parxel.nodes import Document
 
-from util.diagnostic import Diagnostic, ErrorMessage
+from util.diagnostic import Diagnostic, ErrorMessage, WarningMessage
 from util.logging import ScopedLogger, get_logger
+from version import TUPLE as VERSION_TUPLE
 
 
 class BuildDependency(Document):
@@ -25,6 +26,12 @@ class FileRegistry:
 
         def __init__(self, filepath: Path):
             super().__init__(f'Unresolved filepath {filepath}! Munge result may not work as expected.')
+
+    class VersionMismatch(WarningMessage):
+        TOPIC = 'REG'
+
+        def __init__(self, version: tuple):
+            super().__init__(f'Version of cached file "{version}" is incompatible with "{VERSION_TUPLE}"! Cached file is ignored.')
 
     def __init__(self, source: Path, target: Path, diagnostic: Diagnostic, logger: ScopedLogger = get_logger(__name__)):
         self.registered_files = {} # TODO: Maybe rename to source_files
@@ -109,6 +116,7 @@ class FileRegistry:
 
         with (graph_file_path).open('wb+') as graph_file:
             pickle.dump({
+                'version': VERSION_TUPLE,
                 'munged_files': self.munged_files,
                 'registered_files': self.registered_files,
                 'source': self.source,
@@ -129,12 +137,18 @@ class FileRegistry:
 
         if graph_file_path.exists():
             self.logger.info(f'Load dependency file: "{graph_file_path}"')
-
             graph_file = pickle.load(graph_file_path.open('rb'))
+
             source = graph_file['source']
             target = graph_file['target']
 
             if source == self.source and target == self.target:
+
+                version = graph_file['version']
+
+                if version != VERSION_TUPLE:
+                    self.diagnostic.report(FileRegistry.VersionMismatch(version))
+
                 self.munged_files = graph_file['munged_files']
                 self.registered_files = graph_file['registered_files']
 
