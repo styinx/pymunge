@@ -117,7 +117,7 @@ class ModelBuilder(SwbfUcfbBuilder):
                 model_tree[model_node.parent].add(model_tree[model_node.name])
 
         # Find enveloped models
-        for index, node in model_indices.items():
+        for node in model_indices.keys():
 
             if not node.is_enveloped:
                 continue
@@ -126,10 +126,10 @@ class ModelBuilder(SwbfUcfbBuilder):
             segments = node.geometry.find(SegmentHeader)
             weights = segments.find(WeightBones).weights
 
-            weighted_bone_indices = [vertex[0] for weight in weights for vertex in weight if vertex[0] > 0 and vertex[1] > 0.0]
+            weighted_bone_indices = {vertex[0] for weight in weights for vertex in weight if vertex[0] > 0 and vertex[1] > 0.0}
+            bone_model_indices = [envelope.indices[idx] for idx in weighted_bone_indices]
 
-            for envl_index in weighted_bone_indices:
-                modl_index = envelope.indices[envl_index]
+            for modl_index in bone_model_indices:
                 if model_indices[modl_index].name not in enveloped_names:
                     enveloped_names.append(model_indices[modl_index].name)
 
