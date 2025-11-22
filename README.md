@@ -3,6 +3,32 @@
 Munge tool for Star Wars Battlefront 2004.
 
 
+## Introduction
+
+This project was initially started out of minor frustration with the original BFBuilder modding tools.
+Some pain points were:
+- Sudden game crashes, after a simple change. 
+- Unhelpful munge errors.
+- Unfinished/Undocumented features.
+- Inconsistencies in asset files.
+
+The goal of this project is to have a more userfriendly munge process and to create less possibilities to shoot yourself in the foot.
+This includes:
+- Strict checking of modding files.
+- Better error/warning/info messages.
+- Helpful suggestions and tips.
+- Documentation of the several file formats.
+
+Further use cases could include:
+- Customize munge output
+- Custom munge imports
+
+
+## TODOs and other stuff
+
+- What to do about files modified during munging?
+
+
 ## Documentation
 
 [pymunge docs](https://styinx.github.io/pymunge/)
@@ -37,13 +63,13 @@ pymunge -s ./your_files
 
 ### Build a single ODF file
 ```
-pymunge -s your_file.odf odfmunge
+pymunge -s your_file.odf OdfMunge
 ```
 
 
 ### Build a folder of ODF files
 ```
-pymunge -s ./your_files odfmunge
+pymunge -s ./your_files OdfMunge
 ```
 
 

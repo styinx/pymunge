@@ -1,20 +1,19 @@
 from logging import Logger
 from pathlib import Path
 import re
-import sys
 
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
-from swbf.parsers.parser import SwbfTextParser
+from app.environment import MungeEnvironment as ENV
+from swbf.parsers.parser import Ext, SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.logging import get_logger
-from util.enum import Enum
+from util.enumeration import Enum
 
 
 class OptWarning(WarningMessage):
-    scope = 'OPT'
+    TOPIC = 'OPT'
 
 
 class Switch(LexicalNode):
@@ -25,7 +24,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Switch:
-            MungeEnvironment.Diagnostic.report(OptWarning(f'Switch "{self.value}" is not known.'))
+            ENV.Diag.report(OptWarning(f'Switch "{self.value}" is not known.'))
 
 
 class Value(LexicalNode):
@@ -37,25 +36,25 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in OptionParser.Value and not re.match(Value.RE_NUMBER, self.value):
-            MungeEnvironment.Diagnostic.report(OptWarning(f'Value "{self.value}" is not known.'))
+            ENV.Diag.report(OptWarning(f'Value "{self.value}" is not known.'))
 
         if isinstance(self.parent, Switch):
             valid_values = OptionParser.SwitchValue[self.parent.value]
 
             if isinstance(valid_values, list):
                 if self.value not in valid_values:
-                    MungeEnvironment.Diagnostic.report(
+                    ENV.Diag.report(
                         OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
                     )
             else:
                 if not re.match(OptionParser.SwitchValue[self.parent.value], self.value):
-                    MungeEnvironment.Diagnostic.report(
+                    ENV.Diag.report(
                         OptWarning(f'Value "{self.value}" is not a valid value for {self.parent.value}.')
                     )
 
 
 class OptionParser(SwbfTextParser):
-    filetype = 'option'
+    Extension = Ext.Option
 
     class Switch(Enum):
         AdditiveEmissive = 'additiveemissive'
@@ -157,29 +156,13 @@ class OptionParser(SwbfTextParser):
 
                 self.exit_scope()
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            opt = OptionParser.read(filepath=path)
-            print(opt.dump())
-        else:
-            for file in path.rglob('*.option'):
-                opt = OptionParser.read(filepath=file)
-
-    elif len(sys.argv) > 2:
-        opt = OptionParser.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    OptionParser.cmd_helper()

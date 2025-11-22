@@ -1,7 +1,14 @@
+import struct
+
 from parxel.nodes import Document
 
-from util.enum import Enum
+from util.enumeration import Enum
 from swbf.parsers.req import ReqParser
+
+
+class Ext(Enum):
+    Class = 'class'
+    Model = 'model'
 
 
 class Magic(Enum):
@@ -64,6 +71,14 @@ def int32_data(number: int) -> bytes:
     return number.to_bytes(length=4, byteorder='little')
 
 
+def float32_data(number: float) -> bytes:
+    return struct.pack('<f', number)
+
+
+def float32_array_data(numbers: list[float]) -> bytes:
+    return struct.pack(f'<{len(numbers)}f', *numbers)
+
+
 class UcfbNode:
 
     def __init__(self):
@@ -81,22 +96,23 @@ class StringProperty(UcfbNode):
         UcfbNode.__init__(self)
 
         self.magic: str = magic
-        self.string: str = string
-        self.length: int = len(string) + 1
-
-        self.string += '\0'
+        self.string: str = string.rstrip('\0') + '\0'
+        self.string_length: int = len(self.string)
+        self.padding: str = ''
+        self.padding_length: int = 0
 
         if pad:
-            alignment = len(self.string) % 4
+            alignment = self.string_length % 4
             if alignment != 0:
-                self.string += '\0' * (4 - alignment)
+                self.padding += '\0' * (4 - alignment)
+                self.padding_length = len(self.padding)
 
     def __len__(self) -> int:
-        # MAGIC , SIZE , string
-        return 4 + 4 + self.length
+        # MAGIC , SIZE , string , padding
+        return 4 + 4 + self.string_length + self.padding_length
 
     def data(self) -> bytes:
-        return string_data(self.magic) + int32_data(self.length) + string_data(self.string)
+        return string_data(self.magic) + int32_data(self.string_length) + string_data(self.string + self.padding)
 
 
 class NumberProperty(UcfbNode):
@@ -122,22 +138,26 @@ class BinaryProperty(UcfbNode):
 
         self.magic: str = magic
         self.buffer: bytearray = buffer
-        self.length = len(buffer)
+        self.buffer_length: int = len(buffer)
+        self.padding: bytearray = bytearray()
+        self.padding_length: int = 0
 
         if pad:
-            alignment = len(self.buffer) % 4
+            alignment = self.buffer_length % 4
             if alignment != 0:
-                self.buffer += bytes([0] * (4 - alignment))
+                self.padding += bytes([0] * (4 - alignment))
+                self.padding_length = len(self.padding)
 
     def __len__(self) -> int:
-        # MAGIC , SIZE , buffer
-        return 4 + 4 + self.length
+        # MAGIC , SIZE , buffer , padding
+        return 4 + 4 + self.buffer_length + self.padding_length
 
     def data(self) -> bytes:
-        return string_data(self.magic) + int32_data(self.length) + self.buffer
+        return string_data(self.magic) + int32_data(self.buffer_length) + self.buffer + self.padding
 
 
 class SwbfUcfbBuilder(UcfbNode):
+    Extension = 'bin' # TODO
 
     def __init__(self, tree: Document, magic: str):
         UcfbNode.__init__(self)
@@ -247,29 +267,5 @@ class Skeleton(SwbfUcfbBuilder):
         self.add(name_property)
 
 
-class Model(SwbfUcfbBuilder):
-
-    def __init__(self, name: str, root: str, properties: dict):
-        SwbfUcfbBuilder.__init__(self, Magic.Model)
-
-        name_property = StringProperty('NAME', name)  # msh name
-        node_property = StringProperty('NODE', root)  # root name
-        info_property = StringProperty('INFO', '?')
-
-        self.add(name_property)
-        self.add(node_property)
-        self.add(info_property)
-
-
 if __name__ == '__main__':
-    ucfb = Ucfb()
-    script = Script('bes2a', 'yummy', bytearray([1, 2, 3]))
-    odf = Class('Light', 'rhnlightn', {'Color': '0 0 0 255', 'Size': '25'})
-    msh = Model('platform', 'platform_root', {'Color': '0 0 0 255', 'Size': '25'})
-
-    ucfb.add(script)
-    ucfb.add(odf)
-    ucfb.add(msh)
-
-    ucfb.data()
-    print(ucfb.dump())
+    pass

@@ -5,16 +5,15 @@ import re
 from parxel.nodes import Document, LexicalNode, Node
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.registry import Dependency
-from swbf.parsers.parser import SwbfTextParser
+from app.environment import MungeEnvironment as ENV
+from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import get_logger
 
 
 class ReqWarning(WarningMessage):
-    scope = 'REQ'
+    TOPIC = 'REQ'
 
 
 class Comment(LexicalNode):
@@ -45,7 +44,7 @@ class Block(LexicalNode):
         self.type: str = ''
 
         if self.header not in ReqParser.Header:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block header "{self.header}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block header "{self.header}" is not known.'))
 
 
 class Type(LexicalNode):
@@ -56,7 +55,7 @@ class Type(LexicalNode):
         self.type: str = self.raw().strip()
 
         if self.type not in ReqParser.Type:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block type "{self.type}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block type "{self.type}" is not known.'))
 
 
 class Property(LexicalNode):
@@ -71,14 +70,13 @@ class Property(LexicalNode):
         self.value: str = match.group(2)
 
         if self.key not in ReqParser.Property:
-            MungeEnvironment.Diagnostic.report(ReqWarning(f'Block property "{self.key}" is not known.'))
+            ENV.Diag.report(ReqWarning(f'Block property "{self.key}" is not known.'))
 
 
-class Value(LexicalNode, Dependency):
+class Value(LexicalNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
-        Dependency.__init__(self, filepath=None)
 
         self.name: str = self.raw().strip()
 
@@ -97,7 +95,7 @@ class Value(LexicalNode, Dependency):
 
 
 class ReqParser(SwbfTextParser):
-    filetype = 'req'
+    Extension = Ext.Req
 
     class Header(Enum):
         Reqn = 'REQN'
@@ -181,7 +179,7 @@ class ReqParser(SwbfTextParser):
                     else:
                         value = Value(self.collect_tokens(), type)
                         self.add_to_scope(value)
-                        self.register_dependency(value)
+                        ENV.Reg.add_link(self.filepath, value.filepath)
 
                 elif self.get().type == TK.EqualSign:
                     self.consume_until(TK.QuotationMark)
@@ -221,11 +219,10 @@ class ReqParser(SwbfTextParser):
                     condition = Condition(self.collect_tokens())
                     self.enter_scope(condition)
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 

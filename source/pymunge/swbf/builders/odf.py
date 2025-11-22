@@ -1,90 +1,126 @@
-from app.environment import MungeEnvironment
+from pathlib import Path
+
+from app.environment import MungeEnvironment as ENV
+from swbf.builders.builder import Ext
 from swbf.builders.builder import int32_data
 from swbf.builders.builder import StringProperty, BinaryProperty
 from swbf.builders.builder import Magic, SwbfUcfbBuilder
 from swbf.builders.fnv1a import fnv1a_32
-from swbf.parsers.odf import OdfParser, Section, Key, Reference, Value
-from util.diagnostic import ErrorMessage
+from swbf.parsers.odf import OdfParser, OdfNode, Section, Key, Reference, Value
+from util.diagnostic import ErrorMessage, WarningMessage
 
 
-class OdfBuilderError(ErrorMessage):
-    scope = 'ODF'
+class ClassBuilderError(ErrorMessage):
+    TOPIC = 'ODF'
 
 
-class Class(SwbfUcfbBuilder):
+class ClassBuilderWarning(WarningMessage):
+    TOPIC = 'ODF'
+
+
+class InconsistentSections(ClassBuilderError):
+    def __init__(self, section_count: int, filepath: Path):
+        if section_count > 2:
+            text = 'More than 2'
+        else:
+            text = 'Less than 2'
+        super().__init__(f'{text} sections found in file: "{filepath}"')
+
+
+class MissingSection(ClassBuilderError):
+    def __init__(self, name: str, filepath: Path):
+        super().__init__(f'No "{name}" section found in file: "{filepath}"')
+
+
+class MissingNode(ClassBuilderError):
+    def __init__(self, node: type[OdfNode], filepath: Path):
+        super().__init__(f'Missing Node "{node.__class__.__name__}" in file {filepath}')
+
+
+class ClassChunk:
+    BASE = 'BASE'
+    PROP = 'PROP'
+    TYPE = 'TYPE'
+
+
+class ClassBuilder(SwbfUcfbBuilder):
+    Extension = Ext.Class
 
     def __init__(self, tree: OdfParser):
-        magic: str = Magic.EntityClass
-        section: Section = tree.children[0]
-        odf_type: str = section.name
+        class_section: Section = tree.find(Section)
 
-        if odf_type == OdfParser.Section.ExplosionClass:
+        if not class_section:
+            ENV.Diag.report(MissingNode(Section, self.tree.filepath))
+
+        if class_section.name == OdfParser.Section.ExplosionClass:
             magic = Magic.ExplosionClass
-        elif odf_type == OdfParser.Section.OrdnanceClass:
+        elif class_section.name == OdfParser.Section.OrdnanceClass:
             magic = Magic.OrdnanceClass
-        elif odf_type == OdfParser.Section.WeaponClass:
+        elif class_section.name == OdfParser.Section.WeaponClass:
             magic = Magic.WeaponClass
+        else:
+            magic = Magic.EntityClass
 
         SwbfUcfbBuilder.__init__(self, tree, magic)
 
     def build(self):
-        geom_name_skipped = False
+        sections = self.tree.find_all(Section)
 
-        try:
+        len_sections = len(sections)
+        if len_sections > 2:
+            ENV.Diag.report(InconsistentSections(len_sections, self.tree.filepath))
+        elif len_sections < 2:
+            ENV.Diag.report(InconsistentSections(len_sections, self.tree.filepath))
 
-            it = self.tree.walk()
+        class_section = [x for x in sections if x.name.find('Class') > -1]
+        properties_section = [x for x in sections if x.name.find('Properties') > -1]
 
-            while it:
+        # Write ...Class section
+        if not class_section:
+            ENV.Diag.report(MissingSection('...Class', self.tree.filepath))
 
-                node = next(it)
+        else:
+            for key in class_section[0].find_all(Key):
+                if key.name == OdfParser.Key.ClassLabel:
 
-                if isinstance(node, Key):
+                    class_label = key.find(Value)
 
-                    if node.name == OdfParser.Key.ClassLabel:
-                        class_label = next(it)
-
-                        if not isinstance(class_label, Value):
-                            raise Exception('TODO')
-
-                        base_property = StringProperty('BASE', class_label.value.replace('"', ''))
-                        self.add(base_property)
-
-                        name_property = StringProperty('TYPE', self.tree.filepath.stem)  # odf name
-                        self.add(name_property)
+                    if not class_label:
+                        ENV.Diag.report(ClassBuilderError(f'Missing class label in file: "{self.tree.filepath}"'))
 
                     else:
 
-                        # TODO: filter out duplicates and invalid props
+                        base_property = StringProperty(ClassChunk.BASE, class_label.raw_value())
+                        self.add(base_property)
 
-                        # Filter out duplicated GeometryName
-                        if self.magic == Magic.EntityClass and not geom_name_skipped and node.name == OdfParser.Key.GeometryName:
-                            next(it)
-                            geom_name_skipped = True
-                            continue
+                        name_property = StringProperty(ClassChunk.TYPE, self.tree.filepath.stem)  # ODF name without Extension
+                        self.add(name_property)
 
-                        val = next(it)
-                        if isinstance(val, Reference):
-                            prop = BinaryProperty(
-                                'PROP',
-                                int32_data(fnv1a_32(node.name)) +
-                                (val.filepath.stem.replace('"', '') + chr(0)).encode('utf-8')
-                            )
-                            self.add(prop)
+        # Write Properties section
+        if not properties_section:
+            ENV.Diag.report(MissingSection('Properties', self.tree.filepath))
 
-                        elif isinstance(val, Value):
-                            if val.value != '""':
-                                prop = BinaryProperty(
-                                    'PROP',
-                                    int32_data(fnv1a_32(node.name)) + (val.value.replace('"', '') + chr(0)).encode('utf-8')
-                                )
-                                self.add(prop)
+        else:
+            for key in properties_section[0].find_all(Key):
+                # TODO: filter out duplicates and invalid props
 
-                        else:
-                            error = f'Unexpected Node "{node.__class__.__name__}".'
-                            MungeEnvironment.Diagnostic.report(OdfBuilderError(error))
-                            raise Exception(error)
+                val = key.children[0]
+                if isinstance(val, Reference):
+                    magic = int32_data(fnv1a_32(key.name))
+                    data = (val.filepath.stem + chr(0)).encode('utf-8')
 
-        except StopIteration:
-            pass
+                    prop = BinaryProperty(ClassChunk.PROP, magic + data)
+                    self.add(prop)
+
+                elif isinstance(val, Value):
+                    if val.value != '""':
+                        magic = int32_data(fnv1a_32(key.name))
+                        data = (val.raw_value() + chr(0)).encode('utf-8')
+
+                        prop = BinaryProperty(ClassChunk.PROP, magic + data)
+                        self.add(prop)
+
+                else:
+                    ENV.Diag.report(ClassBuilderError(f'Unexpected Node "{key.__class__.__name__}".'))
 
         return self

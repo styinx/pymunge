@@ -1,3 +1,4 @@
+from difflib import get_close_matches
 from logging import Logger
 from pathlib import Path
 import re
@@ -5,68 +6,107 @@ import re
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.registry import Dependency
-from swbf.parsers.parser import SwbfTextParser
+from app.environment import MungeEnvironment as ENV
+from swbf.parsers.parser import Ext, SwbfTextParser
 from util.diagnostic import WarningMessage
-from util.enum import Enum
+from util.enumeration import Enum
 from util.logging import get_logger
 
 
-class OdfParserWarning(WarningMessage):
-    scope = 'ODF'
+class OdfNode(LexicalNode):
+    def __init__(self, tokens: list[Token], parent: Node = None):
+        super().__init__(tokens, parent)
 
 
-class Comment(LexicalNode):
+class Comment(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.text: str = self.raw().strip()
 
 
-class Key(LexicalNode):
+class Key(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Key:
-            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Key name "{self.name}" is not known.'))
+            ENV.Diag.report(OdfParser.UnknownKey(self.name))
 
 
-class Value(LexicalNode):
+class Value(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.value: str = self.raw().strip()
 
+    def raw_value(self) -> str:
+        return self.value.replace('"', '')
 
-class Reference(Value, Dependency):
+
+class Reference(Value):
     RE_FILE = re.compile(r'"[_a-zA-Z]\w+\.\w+"')
 
-    def __init__(self, tokens: list[Token], parent: Node = None):
+    def __init__(self, basepath: Path, tokens: list[Token], parent: Node = None):
         Value.__init__(self, tokens, parent)
 
-        filepath = Path(self.raw())
-        Dependency.__init__(self, filepath.resolve())
+        self.filepath = basepath / self.raw().replace('"', '')
 
 
-class Section(LexicalNode):
+class Section(OdfNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
-        LexicalNode.__init__(self, tokens, parent)
+        OdfNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
 
         if self.name not in OdfParser.Section:
-            MungeEnvironment.Diagnostic.report(OdfParserWarning(f'Section name "{self.name}" is not known.'))
+            ENV.Diag.report(OdfParser.UnknownSection(self.name))
+
+
+from difflib import SequenceMatcher
+
+def get_best_matches(word, desired, n=3, cutoff=0.8):
+    word_lower = word.lower()
+    scored = []
+
+    for candidate in desired:
+        ratio = SequenceMatcher(None, word_lower, candidate.lower()).ratio()
+        if ratio >= cutoff:
+            scored.append((ratio, candidate))
+
+    # sort by ratio (descending), then by name for stability
+    scored.sort(key=lambda x: (-x[0], x[1]))
+
+    return [candidate for _, candidate in scored[:n]]
+
+
+def suggest_option(needle: str, haystack: list):
+    matches = get_best_matches(needle, haystack)
+    if not matches:
+        return ''
+    filler = '' if len(matches) == 1 else 'one of '
+    suggestions = ', '.join(f'"{option}"' for option in matches)
+    return f'Did you mean {filler}{suggestions}?'
 
 
 class OdfParser(SwbfTextParser):
-    filetype = 'odf'
+    Extension = Ext.Odf
+
+    class OdfDiagnosticMessage:
+        TOPIC = 'ODF'
+
+    class UnknownKey(OdfDiagnosticMessage, WarningMessage):
+        def __init__(self, key: str):
+            super().__init__(f'Key name "{key}" is not known. {suggest_option(key, OdfParser.Key)}')
+
+    class UnknownSection(OdfDiagnosticMessage, WarningMessage):
+        def __init__(self, section: str):
+            super().__init__(f'Section name "{section}" is not known. {suggest_option(section, OdfParser.Section)}')
 
     class Section(Enum):
         ExplosionClass = 'ExplosionClass'
@@ -262,7 +302,6 @@ class OdfParser(SwbfTextParser):
         ClassHisDEF = 'ClassHisDEF'
         ClassImpATK = 'ClassImpATK'
         ClassImpDEF = 'ClassImpDEF'
-        ClassLabel_ = 'classLabel'  # TODO
         ClassLabel = 'ClassLabel'
         ClassLocATK = 'ClassLocATK'
         ClassLocDEF = 'ClassLocDEF'
@@ -278,7 +317,6 @@ class OdfParser(SwbfTextParser):
         CockpitChatterStream = 'CockpitChatterStream'
         CockpitTension = 'CockpitTension'
         CodeInitialWidth = 'CodeInitialWidth'
-        Collision_ = 'Collision'  # TODO
         Collision = 'COLLISION'
         CollisionInflict = 'CollisionInflict'
         CollisionLowResRootScale = 'CollisionLowResRootScale'
@@ -435,9 +473,7 @@ class OdfParser(SwbfTextParser):
         GeometryColorMax = 'GeometryColorMax'
         GeometryColorMin = 'GeometryColorMin'
         GeometryLowRes = 'GeometryLowRes'
-        GeometryName_ = 'geometryName'  # TODO
         GeometryName = 'GeometryName'
-        GeometryScale_ = 'geometryScale'  # TODO
         GeometryScale = 'GeometryScale'
         GlowLength = 'GlowLength'
         Gravity = 'Gravity'
@@ -564,7 +600,6 @@ class OdfParser(SwbfTextParser):
         LockedOnSound = 'LockedOnSound'
         LockedSound = 'LockedSound'
         LockOffAngle = 'LockOffAngle'
-        LockOnAngle_ = 'lockOnAngle'  # TODO
         LockOnAngle = 'LockOnAngle'
         LockOnRange = 'LockOnRange'
         LockOnTime = 'LockOnTime'
@@ -660,7 +695,6 @@ class OdfParser(SwbfTextParser):
         NeutralizeTime = 'NeutralizeTime'
         NextAimer = 'NextAimer'
         NextBarrel = 'NextBarrel'
-        NextCharge_ = 'NextCharge'  # TODO
         NextCharge = 'NEXTCHARGE'
         NextDropItem = 'NextDropItem'
         NoCombatInterrupt = 'NoCombatInterrupt'
@@ -813,7 +847,6 @@ class OdfParser(SwbfTextParser):
         ShockFadeOutGain = 'ShockFadeOutGain'
         ShockFadeOutTime = 'ShockFadeOutTime'
         ShockSound = 'ShockSound'
-        Shotdelay_ = 'shotdelay'  # TODO
         ShotDelay = 'ShotDelay'
         ShotElevate = 'ShotElevate'
         ShotPatternCount = 'ShotPatternCount'
@@ -827,11 +860,10 @@ class OdfParser(SwbfTextParser):
         SkinnyFactor = 'SkinnyFactor'
         SmallBan = 'SmallBan'
         SmashParkedFlyers = 'SmashParkedFlyers'
-        SniperScope = 'SniperScope'
+        SniperTOPIC = 'SniperScope'
         SoldierAmmo = 'SoldierAmmo'
         SoldierAnimation = 'SoldierAnimation'
         SoldierBan = 'SoldierBan'
-        SoldierCollision_ = 'soldierCollision'  # TODO
         Soldiercollision = 'Soldiercollision'
         SoldierCollision = 'SoldierCollision'
         SoldierCollisionOnly = 'SoldierCollisionOnly'
@@ -857,7 +889,6 @@ class OdfParser(SwbfTextParser):
         StandMoveSpread = 'StandMoveSpread'
         StandSound = 'StandSound'
         StandStillSpread = 'StandStillSpread'
-        Static_ = 'static'  # TODO
         Static = 'Static'
         StatusTexture = 'StatusTexture'
         SteerLeft = 'steer_left'
@@ -945,7 +976,6 @@ class OdfParser(SwbfTextParser):
         TrackOffset = 'TrackOffset'
         Traction = 'Traction'
         TrailEffect = 'TrailEffect'
-        TrakCenter = 'TrakCenter'
         TransmitRange = 'TransmitRange'
         TransparentType = 'TransparentType'
         TrialEffect = 'TrialEffect'
@@ -1162,19 +1192,20 @@ class OdfParser(SwbfTextParser):
                 value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
 
                 if re.match(Reference.RE_FILE, value_text) is not None:
-                    reference = Reference(value_tokens)
+                    reference = Reference(self.filepath.parent, value_tokens)
                     key.add(reference)
+                    ENV.Reg.add_link(self.filepath, reference.filepath)
+
                 else:
                     value = Value(value_tokens)
                     key.add(value)
 
                 self.discard()  # \n
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
-                self.logger.warning(f'Unrecognized token "{self.get()} ({self.tokens()})".')
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 

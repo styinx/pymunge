@@ -1,8 +1,9 @@
 MAJOR: int = 0
-MINOR: int = 10
-PATCH: int = 68
-HASH: str = '46ea8c1'
-DATE: str = '2025-06-17-17-17'
-BRANCH: str = 'master'
-NUMBER: tuple[int, int, int] = (0, 10, 68)
-STRING: str = '00.10.000068_46ea8c1_master_2025-06-17-17-17'
+MINOR: int = 9
+PATCH: int = 74
+HASH: str = 'f3915db'
+DATE: str = '2025-08-31-17-30'
+BRANCH: str = 'dev'
+TUPLE: tuple[int, int, int] = (0, 9, 74)
+INFO: str = '00.09.74'
+STRING: str = '00.09.000074_f3915db_dev_2025-08-31-17-30'

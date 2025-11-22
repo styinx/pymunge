@@ -1,5 +1,3 @@
-import sys
-import os
 import curses
 from contextlib import contextmanager
 

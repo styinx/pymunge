@@ -1,67 +1,110 @@
-import curses
+# TODO: remove
+from os import getcwd
+from pathlib import Path
+from sys import path as PATH
 
 
-class Color:
-    WhiteBlack = 1
-    BlackWhite = 2
-    GreenBlack = 3
-    RedBlack = 4
-    StatusBar = BlackWhite
-    Help = RedBlack
+CWD = Path(getcwd())
+BASE_DIR = Path(__file__).parent
+PYMUNGE_DIR = BASE_DIR.parent
+
+PATH.append(str(PYMUNGE_DIR))
+# TODO: remove end
+
+from util.curses.util import Align, Color, Direction, Key, Style
+from util.curses.widgets import Root, Box, Table, ProgressBar, Frame, Label, Grid, Log
 
 
 def gui():
-    running = True
-    key = 0
+    root = Root()
 
-    screen = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    curses.start_color()
+    bindings = Table([
+        ['CTRL+c', 'Quit'],
+        ['q', 'Quit'],
+        ['p', 'Pause'],
+        [],
+        ['← ↓ ↑ →', 'Navigate view'],
+        ['h j k l', 'Navigate view'],
+        [],
+        ['CTRL+<...>', 'Navigate focus'],
+        ['ESC', 'Clear focus'],
+        ['TAB', 'Cycle focus'],
+    ])
 
-    screen.keypad(True)
+    style1 = Style()
+    style1.bold = True
+    style1.text_color = Color.MagentaWhite
 
-    curses.init_pair(Color.WhiteBlack, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(Color.BlackWhite, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(Color.GreenBlack, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(Color.RedBlack, curses.COLOR_RED, curses.COLOR_BLACK)
+    style2 = Style()
+    style2.text_color = Color.MagentaBlack
 
-    height, width = screen.getmaxyx()
-    height_third = height // 3
-    width_third = width // 3
+    help = Frame('Key bindings')
+    help.add(bindings)
 
-    win_proc = curses.newwin(height_third * 2, width_third * 2, 0, 0)
-    help = curses.newwin(height_third * 1, width_third * 1, 0, width_third * 2)
-    statusbar = curses.newwin(1, width, height - 1, 0)
+    log = Log()
+    for i in range(30):
+        log.add_line(f'{i}. line')
 
-    screen.clear()
-    screen.refresh()
+    p1 = ProgressBar(align=Align.Left)
+    p2 = ProgressBar(align=Align.Center)
+    p3 = ProgressBar(align=Align.Right)
+    p4 = ProgressBar(align=Align.Left, type=ProgressBar.Type.Absolute)
+    p5 = ProgressBar(align=Align.Center, type=ProgressBar.Type.Absolute)
+    p6 = ProgressBar(align=Align.Right, type=ProgressBar.Type.Absolute)
 
-    while running:
-        height, width = screen.getmaxyx()
+    p1.style.text_color = Color.GreenBlack
+    p2.style.text_color = Color.RedBlack
 
-        help.attron(curses.A_BOLD)
-        help.attron(curses.color_pair(Color.Help))
-        help.addstr(0, 0, 'q - quit')
-        help.attroff(curses.color_pair(Color.Help))
-        help.attroff(curses.A_BOLD)
-        help.refresh()
+    grid = Grid(cols=4, rows=4)
+    grid.add(0, 0, 1, 1, p1)
+    grid.add(1, 0, 1, 1, p2)
+    grid.add(2, 0, 1, 1, p3)
+    grid.add(0, 1, 1, 1, p4)
+    grid.add(1, 1, 1, 1, p5)
+    grid.add(2, 1, 1, 1, p6)
+    grid.add(0, 2, 1, 1, Frame('left', Align.Left))
+    grid.add(1, 2, 1, 1, Frame('center', Align.Center))
+    grid.add(2, 2, 1, 1, Frame('right', Align.Right))
+    grid.add(0, 3, 1, 1, help)
+    grid.add(1, 3, 1, 1, log)
+    grid.add(2, 3, 1, 1, Label("Label"))
 
-        # Render status bar
-        statusbar.attron(curses.A_BOLD)
-        statusbar.attron(curses.color_pair(Color.StatusBar))
-        statusbar.addstr(0, 0, 'Statusbar')
-        statusbar.attroff(curses.color_pair(Color.StatusBar))
-        statusbar.attroff(curses.A_BOLD)
-        statusbar.refresh()
+    b = Box(Direction.Vertical)
+    b.add(ProgressBar().restyle(style2))
+    b.add(Label("asd").restyle(style2))
+    b.add(Label("dsa").restyle(style2))
 
-        screen.refresh()
+    grid.add(3, 0, 1, 2, b)
 
-        key = screen.getch()
+    status_bar = root.add_statusbar()
 
-        if key == ord('q'):
-            running = False
+    def dec():
+        p1.sub()
+        p2.sub()
+        p3.sub()
+        p4.sub()
+        p5.sub()
+        p6.sub()
 
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
+    def inc():
+        p1.add()
+        p2.add()
+        p3.add()
+        p4.add()
+        p5.add()
+        p6.add()
+
+    root.on_key(ord('q'), root.quit)
+    root.on_key(Key.TAB, root.cycle_focus)
+    root.on_key(Key.KP_MINUS, dec)
+    root.on_key(Key.KP_PLUS, inc)
+
+    status_bar.add(Label("dasd").restyle(style1))
+    status_bar.add(Label("OK").restyle(style1))
+
+    root.set_layout(grid)
+    root.run()
+
+
+if __name__ == '__main__':
+    gui()

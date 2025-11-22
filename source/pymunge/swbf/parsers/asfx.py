@@ -1,21 +1,18 @@
 from logging import Logger
 from pathlib import Path
-import sys
 
-from parxel.lexer import Lexer
 from parxel.nodes import Node, LexicalNode
 from parxel.token import TK, Token
 
-from app.environment import MungeEnvironment
-from app.diagnostic import WarningMessage
-from app.registry import Dependency
-from swbf.parsers.parser import SwbfTextParser
+from app.environment import MungeEnvironment as ENV
+from swbf.parsers.parser import Ext, SwbfTextParser
+from util.diagnostic import WarningMessage
 from util.logging import get_logger
-from util.enum import Enum
+from util.enumeration import Enum
 
 
 class AsxWarning(WarningMessage):
-    scope = 'ASX'
+    TOPIC = 'ASX'
 
 
 class Comment(LexicalNode):
@@ -37,18 +34,15 @@ class Condition(LexicalNode):
         self.arguments: list[str] = condition[1:]
 
 
-class SoundEffect(LexicalNode, Dependency):
+class SoundEffect(LexicalNode):
 
     def __init__(self, tokens: list[Token], parent: Node = None):
         LexicalNode.__init__(self, tokens, parent)
 
         values: list[str] = self.raw().strip().split(' ')
 
-        self.path: str = values[0]
+        self.filepath: str = values[0]
         self.name: str = '' if len(values) == 1 else values[1]
-
-        filepath = Path(self.path)
-        Dependency.__init__(self, filepath.resolve())
 
 
 class Switch(LexicalNode):
@@ -59,7 +53,7 @@ class Switch(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Switch:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Switch "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Switch "{self.name}" is not known.'))
 
 
 class Config(LexicalNode):
@@ -70,7 +64,7 @@ class Config(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Config:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Config "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Config "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.value]:
         #    self.logger.warning(f'Config "{self.value}" is not a valid config for {self.parent.value}.')
@@ -84,14 +78,14 @@ class Value(LexicalNode):
         self.value: str = self.raw().strip()
 
         if self.value not in AsfxParser.Value:
-            MungeEnvironment.Diagnostic.report(AsxWarning(f'Value "{self.name}" is not known.'))
+            ENV.Diag.report(AsxWarning(f'Value "{self.name}" is not known.'))
 
         #elif self.value not in Asfx.SwitchConfigValue[self.parent.parent.value][self.parent.value]:
         #    self.logger.warning(f'Value "{self.value}" is not a valid value for config {self.parent.value}.')
 
 
 class AsfxParser(SwbfTextParser):
-    filetype = 'asfx'
+    Extension = Ext.Asfx
 
     class Switch(Enum):
         Resample = 'resample'
@@ -145,7 +139,7 @@ class AsfxParser(SwbfTextParser):
 
                 sfx = SoundEffect(self.collect_tokens())
                 self.enter_scope(sfx)
-                self.register_dependency(value)
+                ENV.Reg.add_link(self.filepath, sfx.filepath)
 
                 while self.get().type == TK.Minus:
                     self.discard()  # -
@@ -198,34 +192,13 @@ class AsfxParser(SwbfTextParser):
                     condition = Condition(self.collect_tokens())
                     self.enter_scope(condition)
 
-            # Either skip or throw error
+            # Report error and attempt recovery
             else:
-                self.self.logger.warning(
-                    f'Unrecognized token at position {self.pos}: "{self.get()} ({self.tokens()})".'
-                )
+                ENV.Diag.report(SwbfTextParser.UnrecognizedToken(self))
                 self.discard()
-                # self.error(TK.Null)
 
         return self
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        path = Path(sys.argv[1])
-        if path.is_file():
-            asfx = AsfxParser.read(filepath=path)
-            print(asfx.dump())
-        else:
-            for file in path.rglob('*.asfx'):
-                try:
-                    asfx = AsfxParser.read(filepath=file)
-                except Lexer.EmptyStreamException:
-                    pass
-
-    elif len(sys.argv) > 2:
-        asfx = AsfxParser.read(stream=sys.stdin)
-    else:
-        sys.exit(1)
-
-    # TODO: Global exit code
-    sys.exit(0)
+    AsfxParser.cmd_helper()

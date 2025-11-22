@@ -1,11 +1,13 @@
 *.bin
 *.pickle
 *.pyc
+*.pymunge.*
 *.log
 *.vim
 
 build/
 dist/
+.vscode/
 **/_build/
 **/_munged/
 **/*egg-info/

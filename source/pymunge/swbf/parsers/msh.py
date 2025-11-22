@@ -1,25 +1,90 @@
 from pathlib import Path
-import sys
-from logging import Logger
 
 from parxel.nodes import Node, BinaryNode
 from parxel.parser import BinaryParser
 
-from app.environment import MungeEnvironment
-from swbf.parsers.parser import SwbfBinaryParser
-from util.logging import get_logger
+from swbf.parsers.parser import Ext, SwbfBinaryParser
+from util.logging import ScopedLogger, get_logger
 
 
-class Chunk:
+class MshChunk:
+    TYPE = ''
+
+    # Level 0
+    HEDR = 'HEDR'
+
+    # Level 1
+    ANM2 = 'ANM2'
+    BLN2 = 'BLN2'
+    CL1L = 'CL1L'
+    MSH2 = 'MSH2'
+    SHVO = 'SHVO'
+    SKL2 = 'SKL2'
+
+    # Level 2
+    CAMR = 'CAMR'
+    CYCL = 'CYCL'
+    KFR3 = 'KFR3'
+    MATL = 'MATL'
+    MODL = 'MODL'
+    SINF = 'SINF'
+
+    # Level 3
+    GEOM = 'GEOM'
+    MATD = 'MATD'
+    SWCI = 'SWCI'
+
+    # Level 4
+    CLTH = 'CLTH'
+    SEGM = 'SEGM'
+
+    # Level 5
+    STRP = 'STRP'
+
+    # Leaves
+    ATRB = 'ATRB'
+    BBOX = 'BBOX'
+    BPRS = 'BPRS'
+    CLRB = 'CLRB'
+    CLRL = 'CLRL'
+    CMSH = 'CMSH'
+    COLL = 'COLL'
+    CPOS = 'CPOS'
+    CPRS = 'CPRS'
+    CTEX = 'CTEX'
+    CUV0 = 'CUV0'
+    DATA = 'DATA'
+    ENVL = 'ENVL'
+    FIDX = 'FIDX'
+    FLGS = 'FLGS'
+    FRAM = 'FRAM'
+    FWGT = 'FWGT'
+    NAME = 'NAME'
+    NDXL = 'NDXL'
+    NDXT = 'NDXT'
+    NRML = 'NRML'
+    MATI = 'MATI'
+    MNDX = 'MNDX'
+    MTYP = 'MTYP'
+    POSL = 'POSL'
+    PRNT = 'PRNT'
+    SHDW = 'SHDW'
+    SPRS = 'SPRS'
+    TRAN = 'TRAN'
+    TX0D = 'TX0D'
+    UV0L = 'UV0L'
+    WGHT = 'WGHT'
+
     def __init__(self, msh_stream: BinaryParser):
         self.chunk_name : str = msh_stream.string(4)
         self.chunk_length : int = msh_stream.int32()
 
 
-class Header(Chunk, BinaryNode):
+class Header(MshChunk, BinaryNode):
+    TYPE = MshChunk.HEDR
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
@@ -27,62 +92,65 @@ class Header(Chunk, BinaryNode):
 # Level 1
 
 
-class Animation(Chunk, BinaryNode):
+class Animation(MshChunk, BinaryNode):
+    TYPE = MshChunk.ANM2
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class BlendFactor(Chunk, BinaryNode):
+class BlendFactor(MshChunk, BinaryNode):
+    TYPE = MshChunk.BLN2
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ClosingChunk(Chunk, BinaryNode):
+class ClosingChunk(MshChunk, BinaryNode):
+    TYPE = MshChunk.CL1L
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Mesh(Chunk, BinaryNode):
+class Mesh(MshChunk, BinaryNode):
+    TYPE = MshChunk.MSH2
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ShadowVolume(Chunk, BinaryNode):
+class ShadowVolume(MshChunk, BinaryNode):
+    TYPE = MshChunk.SHVO
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
+
+        self.has_shadow_volume = bool(msh_stream.int32())
+
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Skeleton(Chunk, BinaryNode):
+class Skeleton(MshChunk, BinaryNode):
+    TYPE = MshChunk.SKL2
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
 # Level 2
 
 
-class Camera(Chunk, BinaryNode):
+class AnimationCycle(MshChunk, BinaryNode):
+    TYPE = MshChunk.CYCL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
-        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
-
-
-class AnimationCycle(Chunk, BinaryNode):
-
-    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_animations: int = msh_stream.int32()
 
@@ -97,10 +165,19 @@ class AnimationCycle(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Keyframes(Chunk, BinaryNode):
+class Camera(MshChunk, BinaryNode):
+    TYPE = MshChunk.CAMR
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
+        BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
+
+
+class Keyframes(MshChunk, BinaryNode):
+    TYPE = MshChunk.KFR3
+
+    def __init__(self, msh_stream: BinaryParser, parent: Node = None):
+        MshChunk.__init__(self, msh_stream)
 
         self.num_bones: int = msh_stream.int32()
 
@@ -128,68 +205,76 @@ class Keyframes(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Material(Chunk, BinaryNode):
+class Material(MshChunk, BinaryNode):
+    TYPE = MshChunk.MATL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.materials : int = msh_stream.int32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Model(Chunk, BinaryNode):
+class Model(MshChunk, BinaryNode):
+    TYPE = MshChunk.MODL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class SceneInformation(Chunk, BinaryNode):
+class SceneInformation(MshChunk, BinaryNode):
+    TYPE = MshChunk.SINF
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
 # Level 3
 
 
-class MaterialData(Chunk, BinaryNode):
+class MaterialData(MshChunk, BinaryNode):
+    TYPE = MshChunk.MATD
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Geometry(Chunk, BinaryNode):
+class Geometry(MshChunk, BinaryNode):
+    TYPE = MshChunk.GEOM
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
 # Level 4
 
 
-class ClothHeader(Chunk, BinaryNode):
+class ClothHeader(MshChunk, BinaryNode):
+    TYPE = MshChunk.CLTH
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class SegmentHeader(Chunk, BinaryNode):
+class SegmentHeader(MshChunk, BinaryNode):
+    TYPE = MshChunk.SEGM
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Strip(Chunk, BinaryNode):
+class Strip(MshChunk, BinaryNode):
+    TYPE = MshChunk.STRP
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_indices: int = msh_stream.int32()
         self.polygons: list[int] = [msh_stream.int16() for _ in range(self.num_indices)]
@@ -203,7 +288,9 @@ class Strip(Chunk, BinaryNode):
 # Leaves
 
 
-class Attributes(Chunk, BinaryNode):
+class Attributes(MshChunk, BinaryNode):
+    TYPE = MshChunk.ATRB
+
     Emissive = 1
     Glow = 2
     SingleTransparency = 4
@@ -214,7 +301,7 @@ class Attributes(Chunk, BinaryNode):
     Specular = 128
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.sum: int = msh_stream.advance(1)[0]
         self.render_type: int = msh_stream.advance(1)[0]
@@ -224,10 +311,11 @@ class Attributes(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class BendConstraints(Chunk, BinaryNode):
+class BendConstraints(MshChunk, BinaryNode):
+    TYPE = MshChunk.BPRS
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_constraints: int = msh_stream.int32()
         self.constraints: list[list[int]]= [msh_stream.int16_array(2) for _ in range(self.num_constraints)]
@@ -235,23 +323,25 @@ class BendConstraints(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class BoundingBox(Chunk, BinaryNode):
+class BoundingBox(MshChunk, BinaryNode):
+    TYPE = MshChunk.BBOX
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.rotation: list[float] = msh_stream.float32_array(4)
         self.center: list[float] = msh_stream.float32_array(3)
-        self.extension: list[float] = msh_stream.float32_array(3)
+        self.Extension: list[float] = msh_stream.float32_array(3)
         self.radius: float = msh_stream.float32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ClothMesh(Chunk, BinaryNode):
+class ClothMesh(MshChunk, BinaryNode):
+    TYPE = MshChunk.CMSH
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         # TODO: is it 3 or 4 elements?
         self.num_points: int = msh_stream.int32()
@@ -260,20 +350,22 @@ class ClothMesh(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ClothTextureName(Chunk, BinaryNode):
+class ClothTextureName(MshChunk, BinaryNode):
+    TYPE = MshChunk.CTEX
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.name: str = msh_stream.string(self.chunk_length)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ClothUvCoordinates(Chunk, BinaryNode):
+class ClothUvCoordinates(MshChunk, BinaryNode):
+    TYPE = MshChunk.CUV0
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_coordinates: int = msh_stream.int32()
         self.coordinates: list[list[float]]= [msh_stream.float32_array(2) for _ in range(self.num_coordinates)]
@@ -281,10 +373,11 @@ class ClothUvCoordinates(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ClothVertecies(Chunk, BinaryNode):
+class ClothVertecies(MshChunk, BinaryNode):
+    TYPE = MshChunk.CPOS
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_vertecies: int = msh_stream.int32()
         self.constraints: list[list[float]]= [msh_stream.float32_array(3) for _ in range(self.num_vertecies)]
@@ -292,10 +385,11 @@ class ClothVertecies(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Collision(Chunk, BinaryNode):
+class Collision(MshChunk, BinaryNode):
+    TYPE = MshChunk.COLL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         #TODO: name lengths, 64 for now
 
@@ -313,10 +407,11 @@ class Collision(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class CollisionPrimitive(Chunk, BinaryNode):
+class CollisionPrimitive(MshChunk, BinaryNode):
+    TYPE = MshChunk.SWCI
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.primitive_type: int = msh_stream.int32()
         self.data0: float = msh_stream.float32()
@@ -326,20 +421,22 @@ class CollisionPrimitive(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ColorVertex(Chunk, BinaryNode):
+class ColorVertex(MshChunk, BinaryNode):
+    TYPE = MshChunk.CLRB
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.colors: bytes = msh_stream.bytes(4)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ColorVertecies(Chunk, BinaryNode):
+class ColorVertecies(MshChunk, BinaryNode):
+    TYPE = MshChunk.CLRL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_colors: int = msh_stream.int32()
         self.colors: list[bytes] = [msh_stream.bytes(4) for _ in range(self.num_colors)]
@@ -347,10 +444,11 @@ class ColorVertecies(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class CrossConstraints(Chunk, BinaryNode):
+class CrossConstraints(MshChunk, BinaryNode):
+    TYPE = MshChunk.CPRS
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_coordinates: int = msh_stream.int32()
         self.coordinates: list[list[float]]= [msh_stream.float32_array(3) for _ in range(self.num_coordinates)]
@@ -358,10 +456,11 @@ class CrossConstraints(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class DataCamera(Chunk, BinaryNode):
+class DataCamera(MshChunk, BinaryNode):
+    TYPE = MshChunk.DATA
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         # TODO
         self._todo : bytes = msh_stream.advance(self.chunk_length)
@@ -369,10 +468,11 @@ class DataCamera(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class DataMaterial(Chunk, BinaryNode):
+class DataMaterial(MshChunk, BinaryNode):
+    TYPE = MshChunk.DATA
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.diffuse_color : list[float] = msh_stream.float32_array(4)
         self.specular_color : list[float] = msh_stream.float32_array(4)
@@ -382,10 +482,11 @@ class DataMaterial(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Envelope(Chunk, BinaryNode):
+class Envelope(MshChunk, BinaryNode):
+    TYPE = MshChunk.ENVL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_indices : int = msh_stream.int32()
         self.indices : list[int] = msh_stream.int32_array(self.num_indices)
@@ -393,10 +494,11 @@ class Envelope(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class FixPoints(Chunk, BinaryNode):
+class FixPoints(MshChunk, BinaryNode):
+    TYPE = MshChunk.FIDX
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_points : int = msh_stream.int32()
         self.indices : list[int] = msh_stream.int32_array(self.num_indices)
@@ -404,10 +506,11 @@ class FixPoints(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class FixPointWeights(Chunk, BinaryNode):
+class FixPointWeights(MshChunk, BinaryNode):
+    TYPE = MshChunk.FWGT
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         # TODO: string size
 
@@ -417,7 +520,9 @@ class FixPointWeights(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class FlagsModel(Chunk, BinaryNode):
+class FlagsModel(MshChunk, BinaryNode):
+    TYPE = MshChunk.FLGS
+
     Hidden = 1
     DynamicallyLit = 2
     RetainNormals = 4
@@ -426,17 +531,18 @@ class FlagsModel(Chunk, BinaryNode):
     PS2Optimize = 32
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.flags : int = msh_stream.int32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Frame(Chunk, BinaryNode):
+class Frame(MshChunk, BinaryNode):
+    TYPE = MshChunk.FRAM
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.frame_start: int = msh_stream.int32()
         self.frame_end: int = msh_stream.int32()
@@ -445,20 +551,22 @@ class Frame(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Name(Chunk, BinaryNode):
+class Name(MshChunk, BinaryNode):
+    TYPE = MshChunk.NAME
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.name: str = msh_stream.string(self.chunk_length)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Normals(Chunk, BinaryNode):
+class Normals(MshChunk, BinaryNode):
+    TYPE = MshChunk.NRML
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_normals: int = msh_stream.int32()
         self.normals: list[list[float]] = [msh_stream.float32_array(3) for _ in range(self.num_normals)]
@@ -466,27 +574,31 @@ class Normals(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class MaterialIndex(Chunk, BinaryNode):
+class MaterialIndex(MshChunk, BinaryNode):
+    TYPE = MshChunk.MATI
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.material_index : int = msh_stream.int32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ModelIndex(Chunk, BinaryNode):
+class ModelIndex(MshChunk, BinaryNode):
+    TYPE = MshChunk.MNDX
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.model_index : int = msh_stream.int32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ModelType(Chunk, BinaryNode):
+class ModelType(MshChunk, BinaryNode):
+    TYPE = MshChunk.MTYP
+
     Null = 0
     Dynamic = 1
     Cloth = 2
@@ -496,27 +608,29 @@ class ModelType(Chunk, BinaryNode):
     Destructable = 7
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.model_type : int = msh_stream.int32()
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ParentModel(Chunk, BinaryNode):
+class ParentModel(MshChunk, BinaryNode):
+    TYPE = MshChunk.PRNT
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.name : str = msh_stream.string(self.chunk_length)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Polygons(Chunk, BinaryNode):
+class Polygons(MshChunk, BinaryNode):
+    TYPE = MshChunk.NDXL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         # TODO
         self.todo = msh_stream.bytes(self.chunk_length)
@@ -524,10 +638,11 @@ class Polygons(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class PositionVertices(Chunk, BinaryNode):
+class PositionVertices(MshChunk, BinaryNode):
+    TYPE = MshChunk.POSL
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_positions : int = msh_stream.int32()
         self.positions : list[list[float]] = [msh_stream.float32_array(3) for _ in range(self.num_positions)]
@@ -535,23 +650,25 @@ class PositionVertices(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class ShadowMesh(Chunk, BinaryNode):
+class ShadowMesh(MshChunk, BinaryNode):
+    TYPE = MshChunk.SHDW
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_vertices: int = msh_stream.int32()
         self.vertices: list[list[float]] = [msh_stream.float32_array(3) for _ in range(self.num_vertices)]
         self.num_edges: int = msh_stream.int32()
-        self.edges: list[list[int]] = [msh_stream.int16_array(4) for _ in range(self.num_vertices)]
+        self.edges: list[list[int]] = [msh_stream.int16_array(4) for _ in range(self.num_edges)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class StretchConstraints(Chunk, BinaryNode):
+class StretchConstraints(MshChunk, BinaryNode):
+    TYPE = MshChunk.SPRS
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_constraints: int = msh_stream.int32()
         self.constraints: list[list[int]] = [msh_stream.int16_array(2) for _ in range(self.num_constraints)]
@@ -559,20 +676,22 @@ class StretchConstraints(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Texture(Chunk, BinaryNode):
+class Texture(MshChunk, BinaryNode):
+    TYPE = MshChunk.TX0D
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.name: str = msh_stream.string(self.chunk_length)
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class TransformModel(Chunk, BinaryNode):
+class TransformModel(MshChunk, BinaryNode):
+    TYPE = MshChunk.TRAN
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.scale : list[float] = msh_stream.float32_array(3)
         self.rotation : list[float] = msh_stream.float32_array(4)
@@ -581,10 +700,11 @@ class TransformModel(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class Triangles(Chunk, BinaryNode):
+class Triangles(MshChunk, BinaryNode):
+    TYPE = MshChunk.NDXT
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         # TODO
         self.todo = msh_stream.bytes(self.chunk_length)
@@ -592,10 +712,11 @@ class Triangles(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class UvCoordinates(Chunk, BinaryNode):
+class UvCoordinates(MshChunk, BinaryNode):
+    TYPE = MshChunk.UV0L
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_coordinates : int = msh_stream.int32()
         self.coordinates : list[list[float]] = [msh_stream.float32_array(2) for _ in range(self.num_coordinates)]
@@ -603,87 +724,22 @@ class UvCoordinates(Chunk, BinaryNode):
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
-class WeightBones(Chunk, BinaryNode):
+class WeightBones(MshChunk, BinaryNode):
+    TYPE = MshChunk.WGHT
 
     def __init__(self, msh_stream: BinaryParser, parent: Node = None):
-        Chunk.__init__(self, msh_stream)
+        MshChunk.__init__(self, msh_stream)
 
         self.num_weights : int = msh_stream.int32()
-        self.weights : list[tuple[int, float]] = [(msh_stream.int32(), msh_stream.float32()) for _ in range(self.num_weights)]
+        self.weights : list[tuple[int, float]] = [(msh_stream.int32(), msh_stream.float32()) for _ in range(self.num_weights * 4)]
 
         BinaryNode.__init__(self, msh_stream.collect_bytes(), parent)
 
 
 class MshParser(SwbfBinaryParser):
-    filetype = 'msh'
+    Extension = Ext.Msh
 
-    class Chunk:
-        # Level 0
-        HEDR = 'HEDR'
-
-        # Level 1
-        ANM2 = 'ANM2'
-        BLN2 = 'BLN2'
-        CL1L = 'CL1L'
-        MSH2 = 'MSH2'
-        SHV0 = 'SHV0'
-        SKL2 = 'SKL2'
-
-        # Level 2
-        CAMR = 'CAMR'
-        CYCL = 'CYCL'
-        KFR3 = 'KFR3'
-        MATL = 'MATL'
-        MODL = 'MODL'
-        SINF = 'SINF'
-
-        # Level 3
-        GEOM = 'GEOM'
-        MATD = 'MATD'
-        SWCI = 'SWCI'
-
-        # Level 4
-        CLTH = 'CLTH'
-        SEGM = 'SEGM'
-
-        # Level 5
-        STRP = 'STRP'
-
-        # Leaves
-        ATRB = 'ATRB'
-        BBOX = 'BBOX'
-        BPRS = 'BPRS'
-        CLRB = 'CLRB'
-        CLRL = 'CLRL'
-        CMSH = 'CMSH'
-        COLL = 'COLL'
-        CPOS = 'CPOS'
-        CPRS = 'CPRS'
-        CTEX = 'CTEX'
-        CUV0 = 'CUV0'
-        DATA = 'DATA'
-        ENVL = 'ENVL'
-        FIDX = 'FIDX'
-        FLGS = 'FLGS'
-        FRAM = 'FRAM'
-        FWGT = 'FWGT'
-        NAME = 'NAME'
-        NDXL = 'NDXL'
-        NDXT = 'NDXT'
-        NRML = 'NRML'
-        MATI = 'MATI'
-        MNDX = 'MNDX'
-        MTYP = 'MTYP'
-        POSL = 'POSL'
-        PRNT = 'PRNT'
-        SHDW = 'SHDW'
-        SPRS = 'SPRS'
-        TRAN = 'TRAN'
-        TX0D = 'TX0D'
-        UV0L = 'UV0L'
-        WGHT = 'WGHT'
-
-    def __init__(self, filepath: Path, buffer: bytes = None, logger : Logger = get_logger(__name__)):
+    def __init__(self, filepath: Path, buffer: bytes = None, logger : ScopedLogger = get_logger(__name__)):
         SwbfBinaryParser.__init__(self, filepath=filepath, buffer=buffer, logger=logger)
 
     def _parse_chunk(self, children: dict) -> BinaryNode | Node | None:
@@ -707,13 +763,14 @@ class MshParser(SwbfBinaryParser):
             self.scope = node
             parse_children()
             return self.scope
+
         # The chunk is a leaf
         else:
             return self.scope
 
     def parse_format(self):
         self._parse_chunk({
-            MshParser.Chunk.HEDR: (self.parse_hedr, Header)
+            MshChunk.HEDR: (self.parse_hedr, Header)
         })
 
         return self
@@ -722,12 +779,12 @@ class MshParser(SwbfBinaryParser):
 
     def parse_hedr(self):
         while self._parse_chunk({
-            MshParser.Chunk.ANM2: (self.parse_anm2, Animation),
-            MshParser.Chunk.BLN2: (None, BlendFactor),
-            MshParser.Chunk.MSH2: (self.parse_msh2, Mesh),
-            MshParser.Chunk.SKL2: (None, Skeleton),
-            MshParser.Chunk.SHV0: (None, ShadowVolume),
-            MshParser.Chunk.CL1L: (None, ClosingChunk),
+            MshChunk.ANM2: (self.parse_anm2, Animation),
+            MshChunk.BLN2: (None, BlendFactor),
+            MshChunk.CL1L: (None, ClosingChunk),
+            MshChunk.MSH2: (self.parse_msh2, Mesh),
+            MshChunk.SKL2: (None, Skeleton),
+            MshChunk.SHVO: (None, ShadowVolume),
         }):
             pass
 
@@ -735,17 +792,17 @@ class MshParser(SwbfBinaryParser):
 
     def parse_anm2(self):
         while self._parse_chunk({
-            MshParser.Chunk.CYCL: (self.parse_camr, AnimationCycle),
-            MshParser.Chunk.KFR3: (self.parse_matl, Keyframes),
+            MshChunk.CYCL: (self.parse_camr, AnimationCycle),
+            MshChunk.KFR3: (self.parse_matl, Keyframes),
         }):
             pass
 
     def parse_msh2(self):
         while self._parse_chunk({
-            MshParser.Chunk.CAMR: (self.parse_camr, Camera),
-            MshParser.Chunk.MATL: (self.parse_matl, Material),
-            MshParser.Chunk.MODL: (self.parse_modl, Model),
-            MshParser.Chunk.SINF: (self.parse_sinf, SceneInformation),
+            MshChunk.CAMR: (self.parse_camr, Camera),
+            MshChunk.MATL: (self.parse_matl, Material),
+            MshChunk.MODL: (self.parse_modl, Model),
+            MshChunk.SINF: (self.parse_sinf, SceneInformation),
         }):
             pass
 
@@ -759,35 +816,35 @@ class MshParser(SwbfBinaryParser):
 
     def parse_camr(self):
         while self._parse_chunk({
-            MshParser.Chunk.DATA: (None, DataCamera),
-            MshParser.Chunk.NAME: (None, Name),
+            MshChunk.DATA: (None, DataCamera),
+            MshChunk.NAME: (None, Name),
         }):
             pass
 
     def parse_matl(self):
         while self._parse_chunk({
-            MshParser.Chunk.MATD: (self.parse_matd, MaterialData),
+            MshChunk.MATD: (self.parse_matd, MaterialData),
         }):
             pass
 
     def parse_modl(self):
         while self._parse_chunk({
-            MshParser.Chunk.FLGS: (None, FlagsModel),
-            MshParser.Chunk.GEOM: (self.parse_geom, Geometry),
-            MshParser.Chunk.NAME: (None, Name),
-            MshParser.Chunk.MNDX: (None, ModelIndex),
-            MshParser.Chunk.MTYP: (None, ModelType),
-            MshParser.Chunk.PRNT: (None, ParentModel),
-            MshParser.Chunk.SWCI: (None, CollisionPrimitive),
-            MshParser.Chunk.TRAN: (None, TransformModel)
+            MshChunk.FLGS: (None, FlagsModel),
+            MshChunk.GEOM: (self.parse_geom, Geometry),
+            MshChunk.NAME: (None, Name),
+            MshChunk.MNDX: (None, ModelIndex),
+            MshChunk.MTYP: (None, ModelType),
+            MshChunk.PRNT: (None, ParentModel),
+            MshChunk.SWCI: (None, CollisionPrimitive),
+            MshChunk.TRAN: (None, TransformModel)
         }):
             pass
 
     def parse_sinf(self):
         while self._parse_chunk({
-            MshParser.Chunk.BBOX: (None, BoundingBox),
-            MshParser.Chunk.FRAM: (None, Frame),
-            MshParser.Chunk.NAME: (None, Name)
+            MshChunk.BBOX: (None, BoundingBox),
+            MshChunk.FRAM: (None, Frame),
+            MshChunk.NAME: (None, Name)
         }):
             pass
 
@@ -795,19 +852,19 @@ class MshParser(SwbfBinaryParser):
 
     def parse_geom(self):
         while self._parse_chunk({
-            MshParser.Chunk.BBOX: (None, BoundingBox),
-            MshParser.Chunk.CLTH: (self.parse_clth, ClothHeader),
-            MshParser.Chunk.ENVL: (None, Envelope),
-            MshParser.Chunk.SEGM: (self.parse_segm, SegmentHeader)
+            MshChunk.BBOX: (None, BoundingBox),
+            MshChunk.CLTH: (self.parse_clth, ClothHeader),
+            MshChunk.ENVL: (None, Envelope),
+            MshChunk.SEGM: (self.parse_segm, SegmentHeader)
         }):
             pass
 
     def parse_matd(self):
         while self._parse_chunk({
-            MshParser.Chunk.ATRB: (None, Attributes),
-            MshParser.Chunk.NAME: (None, Name),
-            MshParser.Chunk.DATA: (None, DataMaterial),
-            MshParser.Chunk.TX0D: (None, Texture)
+            MshChunk.ATRB: (None, Attributes),
+            MshChunk.NAME: (None, Name),
+            MshChunk.DATA: (None, DataMaterial),
+            MshChunk.TX0D: (None, Texture)
         }):
             pass
 
@@ -815,33 +872,33 @@ class MshParser(SwbfBinaryParser):
 
     def parse_segm(self):
         while self._parse_chunk({
-            MshParser.Chunk.CLRB: (None, ColorVertex),
-            MshParser.Chunk.CLRL: (None, ColorVertecies),
-            MshParser.Chunk.MATI: (None, MaterialIndex),
-            MshParser.Chunk.NDXL: (None, Polygons),
-            MshParser.Chunk.NDXT: (None, Triangles),
-            MshParser.Chunk.NRML: (None, Normals),
-            MshParser.Chunk.POSL: (None, PositionVertices),
-            MshParser.Chunk.SHDW: (None, ShadowMesh),
-            MshParser.Chunk.STRP: (self.parse_strp, Strip),
-            MshParser.Chunk.UV0L: (None, UvCoordinates),
-            MshParser.Chunk.WGHT: (None, WeightBones)
+            MshChunk.CLRB: (None, ColorVertex),
+            MshChunk.CLRL: (None, ColorVertecies),
+            MshChunk.MATI: (None, MaterialIndex),
+            MshChunk.NDXL: (None, Polygons),
+            MshChunk.NDXT: (None, Triangles),
+            MshChunk.NRML: (None, Normals),
+            MshChunk.POSL: (None, PositionVertices),
+            MshChunk.SHDW: (None, ShadowMesh),
+            MshChunk.STRP: (self.parse_strp, Strip),
+            MshChunk.UV0L: (None, UvCoordinates),
+            MshChunk.WGHT: (None, WeightBones)
         }):
             pass
 
     def parse_clth(self):
         while self._parse_chunk({
             # TODO
-            MshParser.Chunk.BPRS: (None, BendConstraints),
-            MshParser.Chunk.CMSH: (None, ClothMesh),
-            MshParser.Chunk.COLL: (None, Collision),
-            MshParser.Chunk.CPOS: (None, ClothVertecies),
-            MshParser.Chunk.CPRS: (None, CrossConstraints),
-            MshParser.Chunk.CTEX: (None, ClothTextureName),
-            MshParser.Chunk.CUV0: (None, ClothUvCoordinates),
-            MshParser.Chunk.FIDX: (None, FixPoints),
-            MshParser.Chunk.FWGT: (None, FixPointWeights),
-            MshParser.Chunk.SPRS: (None, StretchConstraints)
+            MshChunk.BPRS: (None, BendConstraints),
+            MshChunk.CMSH: (None, ClothMesh),
+            MshChunk.COLL: (None, Collision),
+            MshChunk.CPOS: (None, ClothVertecies),
+            MshChunk.CPRS: (None, CrossConstraints),
+            MshChunk.CTEX: (None, ClothTextureName),
+            MshChunk.CUV0: (None, ClothUvCoordinates),
+            MshChunk.FIDX: (None, FixPoints),
+            MshChunk.FWGT: (None, FixPointWeights),
+            MshChunk.SPRS: (None, StretchConstraints)
         }):
             pass
 
@@ -849,15 +906,12 @@ class MshParser(SwbfBinaryParser):
 
     def parse_strp(self):
         while self._parse_chunk({
-            MshParser.Chunk.BBOX: (None, BoundingBox),
-            MshParser.Chunk.FRAM: (None, Frame),
-            MshParser.Chunk.NAME: (None, Name)
+            MshChunk.BBOX: (None, BoundingBox),
+            MshChunk.FRAM: (None, Frame),
+            MshChunk.NAME: (None, Name)
         }):
             pass
 
 
 if __name__ == '__main__':
     MshParser.cmd_helper()
-
-    # TODO: Global exit code
-    sys.exit(0)
