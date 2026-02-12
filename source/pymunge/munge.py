@@ -32,6 +32,16 @@ def create_parser():
 
     run_parsers = parser.add_subparsers(dest='run', required=True)
 
+    cache = run_parsers.add_parser(Run.Cache)
+    cache.add_argument('-f', '--file', type=File, default=CONFIG.cache.file)
+
+    format = run_parsers.add_parser(Run.Format)
+    format.add_argument('-c', '--check', action='store_true')
+    format.add_argument('-d', '--directory', type=Path, default=CWD)
+    format.add_argument('-f', '--file', type=File)
+    format.add_argument('-F', '--filters', type=str, choices=[Ext.Odf, Ext.Asfx], nargs='+')
+    format.add_argument('-s', '--style', type=File, required=True)
+
     munge = run_parsers.add_parser(Run.Munge)
     munge.add_argument('-b', '--binary-dir', type=MungePath, default=CONFIG.munge.binary_dir)
     munge.add_argument('-c', '--cache-file', type=Path, default=CONFIG.munge.cache_file)
@@ -45,9 +55,6 @@ def create_parser():
     munge.add_argument('-s', '--source', type=MungePath, default=CONFIG.munge.source)
     munge.add_argument('-t', '--target', type=MungePath, default=CONFIG.munge.target)
     munge.add_argument('-v', '--game-version', type=str, default=CONFIG.munge.game_version, choices=GameVersion.vals())
-
-    cache = run_parsers.add_parser(Run.Cache)
-    cache.add_argument('-f', '--file', type=File, default=CONFIG.cache.file)
 
     munge_parsers = munge.add_subparsers(dest='tool')
 
@@ -85,7 +92,14 @@ def main():
 
         environment = MungeEnvironment(args, logger)
 
-        if args.run == Run.Munge:
+        if args.run == Run.Cache:
+            environment.load_cache()
+
+        elif args.run == Run.Format:
+            munger = Munger()
+            munger.format(args.format.file or args.format.directory, args.format.filters, args.format.style)
+
+        elif args.run == Run.Munge:
             environment.registry.load_dependencies()
             environment.registry.collect_munge_files(source_filters)
 
@@ -94,9 +108,6 @@ def main():
 
             environment.store_cache()
             environment.registry.store_dependencies()
-
-        elif args.run == Run.Cache:
-            environment.load_cache()
 
         if args.log_level == LogLevel.Debug:
             environment.details()

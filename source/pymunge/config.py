@@ -18,6 +18,7 @@ from util.enumeration import Enum
 
 class Run(Enum):
     Cache = 'cache'
+    Format = 'format'
     Munge = 'munge'
 
 
@@ -104,6 +105,7 @@ class Default:
     CACHE_FILE = '.pymunge.cache'
     GRAPH_FILE = '.pymunge.graph'
     LOG_FILE = '.pymunge.log'
+    STYLE_FILE = '.style.py'
 
 
 # Default config
@@ -114,6 +116,18 @@ CONFIG = Namespace(**{
     'headless': False,
     'version': False,
     'run': 'munge',
+
+    'cache': Namespace(**{
+        'file': CWD / Default.CACHE_FILE
+    }),
+
+    'format': Namespace(**{
+        'check': False,
+        'directory': CWD,
+        'file': None,
+        'filters': [Ext.Odf],
+        'style': CWD / Default.STYLE_FILE,
+    }),
 
     'munge': Namespace(**{
         'binary_dir': CWD,
@@ -129,10 +143,6 @@ CONFIG = Namespace(**{
         'tool': None,
         'game_version': GameVersion._1
     }),
-
-    'cache': Namespace(**{
-        'file': CWD / Default.CACHE_FILE
-    })
 })
 
 

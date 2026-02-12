@@ -1,2 +1,2 @@
-parxel~=0.0.22
+parxel~=0.0.23
 windows-curses~=2.4.1; sys_platform == 'win32'

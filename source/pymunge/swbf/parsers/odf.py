@@ -1186,7 +1186,7 @@ class OdfParser(SwbfTextParser):
 
                 self.collect_tokens()  # Discard whitespaces and '=' between key and value
 
-                self.consume_until_any([TK.LineFeed, TK.Slash])
+                self.consume_until_any([TK.LineFeed, TK.Slash, TK.Backslash])
 
                 value_tokens = self.collect_tokens()
                 value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
@@ -1200,7 +1200,11 @@ class OdfParser(SwbfTextParser):
                     value = Value(value_tokens)
                     key.add(value)
 
-                self.discard()  # \n
+                if self.get() == TK.Slash or self.get() == TK.Backslash:
+                    self.consume_until(TK.LineFeed)
+                    print(self.collect_tokens())
+                else:
+                    self.discard()  # \n
 
             # Report error and attempt recovery
             else:

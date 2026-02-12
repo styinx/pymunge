@@ -45,7 +45,7 @@ class EnumMeta(type):
         return cls
 
     def __iter__(cls):
-        return iter(cls.enumerators)
+        return iter(cls.vals())
 
     def keys(cls):
         return [k for k, _ in cls.enumerators]

@@ -30,7 +30,19 @@ class MungeEnvironment:
         if not MungeEnvironment.Stat and self.statistic:
             MungeEnvironment.Stat = self.statistic
 
-        if args.run == 'munge':
+        if args.run == 'cache':
+            self.import_cache_file = args.cache.file
+
+        elif args.run == 'format':
+            self.registry: FileRegistry = FileRegistry(
+                source=args.munge.source,
+                target=args.munge.target,
+                diagnostic=self.diagnostic,
+                logger=logger
+            )
+            MungeEnvironment.Reg = self.registry
+
+        elif args.run == 'munge':
             self.registry: FileRegistry = FileRegistry(
                 source=args.munge.source,
                 target=args.munge.target,
@@ -42,9 +54,6 @@ class MungeEnvironment:
                 MungeEnvironment.Reg = self.registry
 
             self.export_cache_file = args.munge.cache_file
-
-        elif args.run == 'cache':
-            self.import_cache_file = args.cache.file
 
     def store_cache(self):
         pickle.dump({
