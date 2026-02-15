@@ -92,19 +92,24 @@ class SwbfTextParser(TextParser, SwbfParser):
         TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser, received: str, expected: str):
-            super().__init__(
+            error = str(
                 f'Unexpected token in file {parser.filepath} at position {parser.token_position()}:'
                 f'Got "{received}", expected "{expected}"'
             )
+            super().__init__(error)
 
     class UnrecognizedToken(ErrorMessage):
         TOPIC = 'PAR'
 
         def __init__(self, parser: TextParser):
-            super().__init__(
+            text_window = parser.buffer[max(0, parser.pos - 10):min(len(parser.buffer), parser.pos + 10)]
+            text = ''.join(map(lambda x: x.text, text_window)).replace('\n', '/n')
+
+            error = str(
                 f'Unrecognized token in file {parser.filepath} at position {parser.token_position()}:'
-                f'"{parser.get()} ({parser.get().type}) ({parser.tokens()})".'
+                f'"{parser.get()} ({parser.get().type}) ({parser.tokens()})" [...{text}...]'
             )
+            super().__init__(error)
 
     def __init__(self, filepath: Path, tokens: list[Token] | None = None, logger: ScopedLogger = get_logger(__name__)):
 

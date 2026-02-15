@@ -1145,16 +1145,24 @@ class OdfParser(SwbfTextParser):
         self.curr = self
 
     def parse_format(self):
+        active_node = self
+
         while self:
             if self.get().type in TK.Whitespaces:
+                if self.get().type == TK.LineFeed:
+                    active_node = self.curr
+
                 self.discard()  # Discard whitespaces at the start of a line
 
             # Comment
-            elif self.get().type in [TK.Slash, TK.Backslash]:
+            elif self.get().type in [TK.Slash, TK.Backslash] and self.peek().type in [TK.Slash, TK.Backslash]:
+                self.discard() # /, \
+                self.discard() # /, \
+
                 self.consume_until(TK.LineFeed)
 
                 comment = Comment(self.collect_tokens())
-                self.curr.add(comment)
+                active_node.add(comment)
 
                 self.discard()  # \n
 
@@ -1173,10 +1181,11 @@ class OdfParser(SwbfTextParser):
 
                 self.discard()  # ]
 
+                active_node = section
+
             # Key value pair
             elif self.get().type == TK.Word:
-                while self.consume(TK.Word):
-                    pass
+                self.consume(TK.Word)
 
                 key = Key(self.collect_tokens())
                 self.curr.add(key)
@@ -1186,7 +1195,12 @@ class OdfParser(SwbfTextParser):
 
                 self.collect_tokens()  # Discard whitespaces and '=' between key and value
 
-                self.consume_until_any([TK.LineFeed, TK.Slash, TK.Backslash])
+                if self.get().type == TK.QuotationMark:
+                    self.consume(TK.QuotationMark)
+                    self.consume_until(TK.QuotationMark)
+                    self.consume(TK.QuotationMark)
+                else:
+                    self.consume_until_any([TK.LineFeed, TK.Slash, TK.Backslash])
 
                 value_tokens = self.collect_tokens()
                 value_text = ''.join(list(map(lambda x: x.text, value_tokens)))
@@ -1200,11 +1214,7 @@ class OdfParser(SwbfTextParser):
                     value = Value(value_tokens)
                     key.add(value)
 
-                if self.get() == TK.Slash or self.get() == TK.Backslash:
-                    self.consume_until(TK.LineFeed)
-                    print(self.collect_tokens())
-                else:
-                    self.discard()  # \n
+                active_node = key
 
             # Report error and attempt recovery
             else:

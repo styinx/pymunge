@@ -38,7 +38,7 @@ def create_parser():
     format = run_parsers.add_parser(Run.Format)
     format.add_argument('-c', '--check', action='store_true')
     format.add_argument('-d', '--directory', type=Path, default=CWD)
-    format.add_argument('-f', '--file', type=File)
+    format.add_argument('-f', '--format-file', type=File)
     format.add_argument('-F', '--filters', type=str, choices=[Ext.Odf, Ext.Asfx], nargs='+')
     format.add_argument('-s', '--style', type=File, required=True)
 
@@ -97,7 +97,7 @@ def main():
 
         elif args.run == Run.Format:
             munger = Munger()
-            munger.format(args.format.file or args.format.directory, args.format.filters, args.format.style)
+            munger.format(args.format.format_file or args.format.directory, args.format.filters, args.format.style)
 
         elif args.run == Run.Munge:
             environment.registry.load_dependencies()

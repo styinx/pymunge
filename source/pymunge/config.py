@@ -124,7 +124,7 @@ CONFIG = Namespace(**{
     'format': Namespace(**{
         'check': False,
         'directory': CWD,
-        'file': None,
+        'format-file': None,
         'filters': [Ext.Odf],
         'style': CWD / Default.STYLE_FILE,
     }),

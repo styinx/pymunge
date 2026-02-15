@@ -147,6 +147,7 @@ class Munger:
             formatter = formatter_type(tree, style)
             ENV.Stat.record('format', str(file), formatter.format)
 
+        print(source)
         if source.is_file():
             format_file(source)
         else:
