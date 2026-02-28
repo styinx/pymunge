@@ -1139,6 +1139,18 @@ class OdfParser(SwbfTextParser):
         ZoomMin = 'ZoomMin'
         ZoomRate = 'ZoomRate'
 
+    SubSection = {
+        Key.BuildingSection,
+        Key.CameraSection,
+        Key.ChunkSection,
+        Key.FlyerSection,
+        Key.NextAimer,
+        Key.ThrustEffect,
+        Key.TurretSection,
+        Key.WalkerSection,
+        Key.WeaponSection
+    }
+
     def __init__(self, filepath: Path, tokens: list[Token] = None, logger: Logger = get_logger(__name__)):
         SwbfTextParser.__init__(self, filepath=filepath, tokens=tokens, logger=logger)
 

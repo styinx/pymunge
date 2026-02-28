@@ -6,6 +6,7 @@ from sys import exit
 from threading import Thread, Event
 
 from app.environment import MungeEnvironment as ENV
+from config import Run
 from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
@@ -46,8 +47,13 @@ class Munger:
 
     StopEvent = Event()
 
-    def __init__(self):
-        pass
+    def __init__(self, run: str, *args, **kwargs):
+        if run == Run.Munge:
+            Munger.process = Munger.munge
+            Munger.args = ENV.Reg.munge_dir
+        elif run == Run.Format:
+            Munger.process = Munger.format
+            Munger.args = args
         #self.ui: Process = Process(target=gui)
 
     def run(self):
@@ -59,7 +65,7 @@ class Munger:
         threads = []
 
         for _ in range(CPUS() - 1):
-            t = Thread(target=Munger.worker)
+            t = Thread(target=Munger.worker, args=Munger.args)
             threads.append(t)
             t.start()
 
@@ -75,13 +81,13 @@ class Munger:
         exit(1)
 
     @staticmethod
-    def worker():
+    def worker(*args):
         while not Munger.StopEvent.is_set():
 
             try:
                 file = ENV.Reg.munge_queue.get(timeout=0.5)
                 if file:
-                    Munger.munge(file, ENV.Reg.munge_dir)
+                    Munger.process(file, *args)
 
             except Empty:
                 # TODO: Breaking the loop should only occur after munging is done 
@@ -127,30 +133,21 @@ class Munger:
         ENV.Reg.mark_munged(file)
 
     @staticmethod
-    def format(source: Path, filters: list, style: Path):
-        def format_file(file: Path):
-            ext = file.suffix[1:]
+    def format(file: Path, style: Path):
+        ext = file.suffix[1:]
 
-            if ext not in Munger.PARSER:
-                ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for parsing'))
-                return
+        if ext not in Munger.PARSER:
+            ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for parsing'))
+            return
 
-            parser_type = Munger.PARSER[ext]
-            parser = parser_type(filepath=file, logger=ENV.Log)
-            tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
+        parser_type = Munger.PARSER[ext]
+        parser = parser_type(filepath=file, logger=ENV.Log)
+        tree = ENV.Stat.record('parse', str(parser.filepath), parser.parse)
 
-            if ext not in Munger.FORMATTER:
-                ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for formatting'))
-                return
+        if ext not in Munger.FORMATTER:
+            ENV.Diag.report(ErrorMessage(f'File type "{ext}" not yet supported for formatting'))
+            return
 
-            formatter_type = Munger.FORMATTER[ext]
-            formatter = formatter_type(tree, style)
-            ENV.Stat.record('format', str(file), formatter.format)
-
-        print(source)
-        if source.is_file():
-            format_file(source)
-        else:
-            for filter in filters:
-                for entry in source.rglob(f'*.{filter}'):
-                    format_file(entry)
+        formatter_type = Munger.FORMATTER[ext]
+        formatter = formatter_type(tree, style)
+        ENV.Stat.record('format', str(file), formatter.format)

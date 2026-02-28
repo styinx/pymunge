@@ -2,35 +2,20 @@ from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
 from swbf.parsers.odf import OdfParser, Section, Key, Value, Comment, Reference
-from swbf.formatters.formatter import SwbfFormatter
+from swbf.formatters.formatter import SwbfFormatter, IncompleteFormatConfiguration
 from swbf.formatters.style import Style, OdfStyle
 from util.diagnostic import ErrorMessage
-
-
-class IncompleteFormatConfiguration(ErrorMessage):
-    def __init__(self):
-        super().__init__('Incomplete format configuration')
+from util.string import BufferedString
 
 
 class OdfFormatter(SwbfFormatter):
     def __init__(self, tree: OdfParser, style: Path):
         SwbfFormatter.__init__(self, style)
 
+        self.configure()
+
         self.tree = tree
-
-        if self.style.whitespace == Style.Whitespace.UseSpaces:
-            self.whitespace_symbol = ' '
-        elif self.style.whitespace == Style.Whitespace.UseTabs:
-            self.whitespace_symbol = '\t'
-        else:
-            ENV.Diag.report(IncompleteFormatConfiguration())
-
-        if self.style.odf.comment == OdfStyle.Comment.UseBackSlash:
-            self.comment_symbol = '\\\\'
-        elif self.style.odf.comment == OdfStyle.Comment.UseForwardSlash:
-            self.comment_symbol = '//'
-        else:
-            ENV.Diag.report(IncompleteFormatConfiguration())
+        self.formatted = BufferedString()
 
         self.key_space = 0
         self.key_spaces = {}
@@ -41,66 +26,71 @@ class OdfFormatter(SwbfFormatter):
                 self.key_space = max(self.key_space, len(key.name))
                 self.key_spaces[section.name] = max(self.key_spaces[section.name], len(key.name))
 
+    def configure(self):
+        if self.style.odf.comment == OdfStyle.Comment.UseBackSlash:
+            self.comment_symbol = '\\\\'
+        elif self.style.odf.comment == OdfStyle.Comment.UseForwardSlash:
+            self.comment_symbol = '//'
+        else:
+            ENV.Diag.report(IncompleteFormatConfiguration())
+
     def format_comment(self, comment):
-        return f'{self.comment_symbol}{comment.text}'
+        self.formatted += f'{self.comment_symbol}{comment.text}'
 
     def format_key(self, key, section):
+        if self.style.odf.separateSubsections and key.name in OdfParser.SubSection:
+            prefix = '\n'
+        else:
+            prefix = ''
+
         match self.style.odf.alignment:
             case OdfStyle.Alignment.AlignOnEqual:
-                return f'{key.name:<{self.key_space}} ='
+                self.formatted += f'{prefix}{key.name:<{self.key_space}} ='
             case OdfStyle.Alignment.AlignOnValue:
-                return f'{key.name:}{"=":<{self.key_space}}'
+                self.formatted += f'{prefix}{key.name:}{"=":<{self.key_space}}'
             case OdfStyle.Alignment.AlignOnEqualPerSection:
-                return f'{key.name:<{self.key_spaces[section.name]}} = '
+                self.formatted += f'{prefix}{key.name:<{self.key_spaces[section.name]}} = '
             case OdfStyle.Alignment.AlignOnValuePerSection:
-                return f'{key.name:}{"=":<{self.key_spaces[section.name]}}'
+                self.formatted += f'{prefix}{key.name:}{"=":<{self.key_spaces[section.name]}}'
             case _:
-                return f'{key.name} = '
+                self.formatted += f'{prefix}{key.name} = '
 
     def format_node(self, node, section):
-        formatted = ''
-
         if isinstance(node, Key):
-            formatted += self.format_key(node, section)
+            self.format_key(node, section)
 
             for child in node:
-                formatted += self.format_node(child, section)
+                self.format_node(child, section)
             
-            formatted += '\n'
-
         elif isinstance(node, Value):
-            formatted += node.value
+            self.formatted += node.value
 
         elif isinstance(node, Reference):
-            formatted += node.filepath
+            self.formatted += node.filepath
 
         elif isinstance(node, Comment):
-            formatted += self.format_comment(node)
-
-        return formatted
+            self.format_comment(node)
 
     def format_section(self, section):
-        formatted = ''
-
         for node in section:
             if isinstance(node, Comment):
-                formatted += self.format_comment(node) + '\n'
+                self.format_comment(node)
             else:
-                formatted += self.format_node(node, section)
+                self.format_node(node, section)
 
-        formatted += '\n'
+            self.formatted += '\n'
 
-        return formatted
+        self.formatted += '\n'
 
     def format(self):
-        formatted = ''
         for node in self.tree:
             if isinstance(node, Section):
-                formatted += f'[{node.name}]\n'
-                formatted += self.format_section(node)
+                self.formatted += f'[{node.name}]\n'
+                self.format_section(node)
             elif isinstance(node, Comment):
-                formatted += self.format_comment(node)
+                self.format_comment(node)
 
-        print(self.tree.file)
-        #print('\n'.join(formatted.split('\n')[:50]))
-        print(formatted)
+        #print(self.tree.file)
+        #print('\n'.join(formatted.split('\n')[:]))
+        print(self.formatted.getvalue())
+

@@ -85,25 +85,27 @@ def main():
             logger.debug(f'{key:20s} {arg}')
 
     try:
-        if args.munge.tool:
-            source_filters = MungeTool._FILTER[args.munge.tool]
-        else:
-            source_filters = [Ext.Req]
-
         environment = MungeEnvironment(args, logger)
 
         if args.run == Run.Cache:
             environment.load_cache()
 
         elif args.run == Run.Format:
-            munger = Munger()
-            munger.format(args.format.format_file or args.format.directory, args.format.filters, args.format.style)
+            environment.registry.collect_munge_files(args.format.filters)
+
+            munger = Munger(args.run, args.format.style)
+            munger.run()
 
         elif args.run == Run.Munge:
+            if args.munge.tool:
+                source_filters = MungeTool._FILTER[args.munge.tool]
+            else:
+                source_filters = [Ext.Req]
+
             environment.registry.load_dependencies()
             environment.registry.collect_munge_files(source_filters)
 
-            munger = Munger()
+            munger = Munger(args.run)
             munger.run()
 
             environment.store_cache()

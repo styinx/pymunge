@@ -5,5 +5,6 @@ style = {
     'odf': {
         'alignment': OdfStyle.Alignment.AlignOnEqualPerSection,
         'comment': OdfStyle.Comment.UseForwardSlash,
+        'separateSubsections': True
     }
 }

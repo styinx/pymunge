@@ -35,7 +35,7 @@ class MungeEnvironment:
 
         elif args.run == 'format':
             self.registry: FileRegistry = FileRegistry(
-                source=args.munge.source,
+                source=args.format.directory,
                 target=args.munge.target,
                 diagnostic=self.diagnostic,
                 logger=logger

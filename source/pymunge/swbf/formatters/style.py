@@ -26,6 +26,11 @@ class OdfStyle:
         UseBackSlash = 'UseBackSlash'
 
     class CommentAlignment(Style.CommentAlignment):
-        AlignTrailingComments = 'AlignTrailingCommentsPerBlock'
+        AlignTrailingCommentsPerBlock = 'AlignTrailingCommentsPerBlock'
+        AlignTrailingCommentsPerSections = 'AlignTrailingCommentsPerSections'
+
+    SeparateSubsections: bool = True
     
     ALIGNMENT  = Alignment.AlignOnEqualPerSection
+    COMMENT = Comment.UseForwardSlash
+    COMMENT_ALIGNMENT = CommentAlignment.AlignTrailingCommentsPerBlock

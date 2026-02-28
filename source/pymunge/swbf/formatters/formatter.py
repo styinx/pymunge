@@ -3,7 +3,13 @@ from importlib import util
 from pathlib import Path
 
 from app.environment import MungeEnvironment as ENV
+from swbf.formatters.style import Style
 from util.diagnostic import ErrorMessage
+
+
+class IncompleteFormatConfiguration(ErrorMessage):
+    def __init__(self):
+        super().__init__('Incomplete format configuration')
 
 
 class SwbfFormatter:
@@ -15,7 +21,6 @@ class SwbfFormatter:
 
         except:
             ENV.Diag.report(ErrorMessage('Could not import style file'))
-
 
         if not hasattr(module, 'style'):
             raise RuntimeError('Script must define a "style" variable')
@@ -30,4 +35,13 @@ class SwbfFormatter:
             return ns
 
         self.style = dict_to_ns(module.style)
-        return self.style
+
+        self.configure()
+
+    def configure(self):
+        if self.style.whitespace == Style.Whitespace.UseSpaces:
+            self.whitespace_symbol = ' '
+        if self.style.whitespace == Style.Whitespace.UseTabs:
+            self.whitespace_symbol = '\t'
+        else:
+            ENV.Diag.report(IncompleteFormatConfiguration())
