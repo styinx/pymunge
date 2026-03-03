@@ -21,10 +21,15 @@ class Call(LexicalNode):
         LexicalNode.__init__(self, tokens, parent)
 
         self.name: str = self.raw().strip()
-        self.is_block: bool = False
 
         if self.name not in CfgParser.Call:
             ENV.Diag.report(CfgWarning(f'Call "{self.name}" is not known.'))
+
+
+class Block(Node):
+
+    def __init__(self, parent: Node = None):
+        Node.__init__(self, parent)
 
 
 class Comment(LexicalNode):
@@ -148,8 +153,8 @@ class CfgParser(SwbfTextParser):
                 # Scope enter
                 if self.consume(TK.CurlyBracketOpen):
                     self.discard() # {
-                    self.enter_scope(call)
-                    call.is_block = True
+                    block = Block()
+                    self.enter_scope(block)
 
             # Scope exit
             elif self.get().type == TK.CurlyBracketClose:

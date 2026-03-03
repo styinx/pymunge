@@ -1,10 +1,12 @@
-from argparse import Namespace
 from importlib import util
 from pathlib import Path
+from types import SimpleNamespace
 
 from app.environment import MungeEnvironment as ENV
+from swbf.parsers.parser import TextParser
 from swbf.formatters.style import Style
 from util.diagnostic import ErrorMessage
+from util.string import BufferedString
 
 
 class IncompleteFormatConfiguration(ErrorMessage):
@@ -13,9 +15,17 @@ class IncompleteFormatConfiguration(ErrorMessage):
 
 
 class SwbfFormatter:
-    def __init__(self, style: Path):
+    def __init__(self, tree: TextParser, style: Path):
+        self.style = self.load_style(style)
+        self.configure_style()
+
+        self.tree : TextParser = tree
+        self.formatted = BufferedString()
+
+    @staticmethod
+    def load_style(file: Path):
         try:
-            spec = util.spec_from_file_location(style.stem, style)
+            spec = util.spec_from_file_location(file.stem, file)
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
@@ -26,7 +36,7 @@ class SwbfFormatter:
             raise RuntimeError('Script must define a "style" variable')
 
         def dict_to_ns(d: dict):
-            ns = Namespace()
+            ns = SimpleNamespace()
             for k, v in d.items():
                 if isinstance(v, dict):
                     setattr(ns, k, dict_to_ns(v))
@@ -34,14 +44,17 @@ class SwbfFormatter:
                     setattr(ns, k, v)
             return ns
 
-        self.style = dict_to_ns(module.style)
+        return dict_to_ns(module.style)
 
-        self.configure()
+    def configure_style(self):
+        self.trailing_comment_space: str = ' ' * self.style.trailingCommentSpace or 2
+        self.indent_space: str = ' ' * (self.style.indentSpace or 2)
+        self.keep_empty_lines: int = self.style.keepEmptyLines or 1
 
-    def configure(self):
-        if self.style.whitespace == Style.Whitespace.UseSpaces:
-            self.whitespace_symbol = ' '
-        if self.style.whitespace == Style.Whitespace.UseTabs:
-            self.whitespace_symbol = '\t'
-        else:
-            ENV.Diag.report(IncompleteFormatConfiguration())
+        match self.style.whitespace:
+            case Style.Whitespace.UseSpaces:
+                self.whitespace_symbol = ' '
+            case Style.Whitespace.UseTabs:
+                self.whitespace_symbol = '\t'
+            case _:
+                ENV.Diag.report(IncompleteFormatConfiguration())

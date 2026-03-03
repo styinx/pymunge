@@ -2,7 +2,6 @@ class Style:
     class Alignment:
         AlignOnEqual = 'AlignOnEqual'
         AlignOnValue = 'AlignOnValue'
-        StripEmpty = 'StripEmpty'
 
     class CommentAlignment:
         AlignTrailingComments = 'AlignTrailingComments'
@@ -14,8 +13,18 @@ class Style:
     ALIGNMENT = Alignment.AlignOnEqual
 
 
+class CfgStyle:
+    class Comment:
+        UseForwardSlash = 'UseForwardSlash'
+        UseDoubleDash = 'UseDoubleDash'
+
+    COMMENT = Comment.UseForwardSlash
+
+
 class OdfStyle:
     class Alignment(Style.Alignment):
+        AlignOnEqual = 'AlignOnEqual'
+        AlignOnValue = 'AlignOnValue'
         AlignOnEqualPerBlock = 'AlignOnEqualPerBlock'
         AlignOnValuePerBlock = 'AlignOnValuePerBlock'
         AlignOnEqualPerSection = 'AlignOnEqualPerSection'
@@ -26,8 +35,9 @@ class OdfStyle:
         UseBackSlash = 'UseBackSlash'
 
     class CommentAlignment(Style.CommentAlignment):
+        AlignTrailingComments = 'AlignTrailingComments'
         AlignTrailingCommentsPerBlock = 'AlignTrailingCommentsPerBlock'
-        AlignTrailingCommentsPerSections = 'AlignTrailingCommentsPerSections'
+        AlignTrailingCommentsPerSection = 'AlignTrailingCommentsPerSection'
 
     SeparateSubsections: bool = True
     

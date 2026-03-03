@@ -1,15 +1,19 @@
+from inspect import stack
 from multiprocessing import cpu_count as CPUS
 from pathlib import Path
 from queue import Empty
 from signal import Signals
-from sys import exit
+from sys import exit, exc_info
 from threading import Thread, Event
+from traceback import extract_tb
 
 from app.environment import MungeEnvironment as ENV
 from config import Run
 from swbf.builders.odf import ClassBuilder
 from swbf.builders.msh import ModelBuilder
 from swbf.builders.builder import Ucfb
+from swbf.formatters.cfg import CfgFormatter
+from swbf.formatters.fx import FxFormatter
 from swbf.formatters.odf import OdfFormatter
 from swbf.parsers.cfg import CfgParser
 from swbf.parsers.fx import FxParser
@@ -19,6 +23,24 @@ from swbf.parsers.parser import Ext
 from swbf.parsers.req import ReqParser
 from swbf.parsers.sky import SkyParser
 from util.diagnostic import ErrorMessage
+
+
+def call_stack():
+    _, _, tb = exc_info()
+
+    frames = []
+
+    def format_frame(file, line):
+        return f"{'/'.join(file.replace('\\', '/').split('/')[-2:])}:{line}"
+
+    if tb is not None:
+        for frame in extract_tb(tb):
+            frames.append(format_frame(frame.filename, frame.lineno))
+    else:
+        for frame_info in stack()[1:]:
+            frames.append(format_frame(frame_info.filename, frame_info.lineno))
+
+    return ' -> '.join(frames)
 
 
 class Munger:
@@ -33,6 +55,8 @@ class Munger:
     }
 
     FORMATTER = {
+        Ext.Cfg: CfgFormatter,
+        Ext.Fx: FxFormatter,
         Ext.Odf: OdfFormatter
     }
 
@@ -94,7 +118,7 @@ class Munger:
                 break
 
             except Exception as e:
-                ENV.Log.error(str(e))
+                ENV.Log.error(f'[{call_stack()}]: {e}')
                 Munger.StopEvent.set()
                 break
 
@@ -133,7 +157,7 @@ class Munger:
         ENV.Reg.mark_munged(file)
 
     @staticmethod
-    def format(file: Path, style: Path):
+    def format(file: Path, style: Path, check: bool = False):
         ext = file.suffix[1:]
 
         if ext not in Munger.PARSER:
@@ -150,4 +174,10 @@ class Munger:
 
         formatter_type = Munger.FORMATTER[ext]
         formatter = formatter_type(tree, style)
-        ENV.Stat.record('format', str(file), formatter.format)
+        formatted = ENV.Stat.record('format', str(file), formatter.format)
+
+        if check:
+            print(formatted)
+        else:
+            pass
+            # write to file

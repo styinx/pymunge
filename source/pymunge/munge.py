@@ -1,13 +1,11 @@
 from argparse import ArgumentParser
-from os import getcwd
 from pathlib import Path
 from signal import signal, SIGINT, SIGTERM
 from sys import exit
-import traceback
 
 from app.environment import MungeEnvironment
 from app.munger import Munger
-from config import CONFIG, CWD, build_args, parse_config, populate_config, File, MungePath
+from config import CONFIG, CWD, populate_config, File, MungePath
 from config import GameVersion, MungeFlags, MungeMode, MungePlatform, MungeTool, Run
 from swbf.parsers.parser import Ext
 from util.enumeration import Enum
@@ -39,7 +37,7 @@ def create_parser():
     format.add_argument('-c', '--check', action='store_true')
     format.add_argument('-d', '--directory', type=Path, default=CWD)
     format.add_argument('-f', '--format-file', type=File)
-    format.add_argument('-F', '--filters', type=str, choices=[Ext.Odf, Ext.Asfx], nargs='+')
+    format.add_argument('-F', '--filters', type=str, choices=[Ext.Cfg, Ext.Fx, Ext.Odf], nargs='+')
     format.add_argument('-s', '--style', type=File, required=True)
 
     munge = run_parsers.add_parser(Run.Munge)
@@ -93,7 +91,7 @@ def main():
         elif args.run == Run.Format:
             environment.registry.collect_munge_files(args.format.filters)
 
-            munger = Munger(args.run, args.format.style)
+            munger = Munger(args.run, args.format.style, args.format.check)
             munger.run()
 
         elif args.run == Run.Munge:
@@ -118,7 +116,6 @@ def main():
 
     except Exception as e:
         logger.error(str(e))
-        print(traceback.format_exc())
 
         return ExitCode.Failure
 
