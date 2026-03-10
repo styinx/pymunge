@@ -1,9 +1,9 @@
 MAJOR: int = 0
-MINOR: int = 13
-PATCH: int = 91
-HASH: str = '372bbce'
-DATE: str = '2026-02-28-18-56'
+MINOR: int = 14
+PATCH: int = 94
+HASH: str = '636d194'
+DATE: str = '2026-03-10-14-39'
 BRANCH: str = 'master'
-TUPLE: tuple[int, int, int] = (0, 13, 91)
-INFO: str = '00.13.91'
-STRING: str = '00.13.000091_372bbce_master_2026-02-28-18-56'
+TUPLE: tuple[int, int, int] = (0, 14, 94)
+INFO: str = '00.14.94'
+STRING: str = '00.14.000094_636d194_master_2026-03-10-14-39'
